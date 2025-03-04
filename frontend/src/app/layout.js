@@ -15,8 +15,8 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <header className="bg-blue-600 text-white p-4">
-          <h1 className="text-2xl font-bold">Gambling Awareness</h1>
+        <header className="bg-teal-600 text-white p-4">
+          <h1 className="text-2xl font-bold">Gambl</h1>
         </header>
         <main className="flex-1">{children}</main>
       </body>
