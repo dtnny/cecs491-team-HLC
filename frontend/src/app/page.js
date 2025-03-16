@@ -1,12 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   // State to track which FAQ is open (null means all closed)
   const [openFAQ, setOpenFAQ] = useState(null);
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    // Check current session
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
 
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => authListener.subscription.unsubscribe(); // Cleanup listener
+  }, []);
+  
   // FAQ data
   const faqs = [
     {
@@ -40,10 +58,10 @@ export default function Home() {
         </p>
         <div className="flex space-x-6">
           <Link
-            href="/signup"
+            href={user ? "/diary" : "/signup"}
             className="bg-blue-700 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-700 transition text-lg"
           >
-            Claim Your Tax Cut Now
+            {user ? "Go to Diary" : "Claim Your Tax Cut Now"}
           </Link>
           <Link
             href="/learn-more"
