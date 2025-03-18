@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const handleSignin = async (e) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function Signin() {
       setMessage("Error: " + error.message);
     } else {
       setMessage("Signed in successfully! Redirecting...");
-      window.location.href = "/diary"; // Redirect to a protected page
+      router.push("/dashboard"); // Redirect to dashboard
     }
   };
 
@@ -39,7 +41,7 @@ export default function Signin() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 text-black"
               required
             />
           </div>
@@ -52,7 +54,7 @@ export default function Signin() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 text-black"
               required
             />
           </div>

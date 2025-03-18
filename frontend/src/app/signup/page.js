@@ -38,7 +38,7 @@ export default function Signup() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700 text-black"
               required
             />
           </div>
@@ -51,13 +51,13 @@ export default function Signup() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-700 text-black"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-full font-semibold hover:bg-blue-700 transition"
+            className="w-full bg-blue-700 text-white py-3 rounded-full font-semibold hover:bg-blue-700 transition"
           >
             Sign Up
           </button>
@@ -65,7 +65,7 @@ export default function Signup() {
         {message && <p className="mt-4 text-center text-black">{message}</p>}
         <p className="mt-4 text-center text-black">
           Already have an account?{" "}
-          <Link href="/signin" className="text-blue-600 hover:underline">
+          <Link href="/signin" className="text-blue-700 hover:underline">
             Sign In
           </Link>
         </p>

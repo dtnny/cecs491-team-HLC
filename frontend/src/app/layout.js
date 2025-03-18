@@ -1,5 +1,7 @@
 import "@/app/globals.css";
-import Link from "next/link"; // Import the Link component
+import Header from "@/components/Header";
+import Link from "next/link";
+import "@fortawesome/fontawesome-free/css/all.min.css"; // Add this line
 
 export const metadata = {
   title: "Gambling Awareness App",
@@ -11,32 +13,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <header className="bg-white text-blue-800 p-4 sticky top-0 z-10">
-          {/* Wrap the header in a Link component */}
-          <Link href="/" passHref>
-            <h1 className="text-2xl font-bold cursor-pointer">project_name</h1>
-          </Link>
-          
-          {/* Sign In button with lock icon */}
-          <Link
-            href="/signin"
-            className="absolute top-1/2 transform -translate-y-1/2 right-4 bg-blue-800 text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-800 transition flex items-center"
-          >
-            <i className="fas fa-lock mr-2"></i> {/* Lock icon */}
-            Sign In
-          </Link>
-        </header>
-        
-        <main className="flex-1">{children}</main>
+        <Header />
+        <main className="flex-1 pt-16">{children}</main>
       </body>
     </html>
   );
