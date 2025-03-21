@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,12 +11,38 @@ export default function Signin() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  const validatePassword = (email, password) => {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long.";
+    }
+    if (password.includes(email)) {
+      return "Password cannot be the same as your email address.";
+    }
+    const emailPrefix = email.split('@')[0]; // Extract the part of the email before the '@'
+    if (password.includes(emailPrefix)) {// Check if the email prefix is included in the password
+      return "Password cannot contain the part before '@' in your email address.";
+    }
+    // Check if the password contains at least one number
+    const hasNumber = /\d/;  // Regular expression to check for numbers
+    if (!hasNumber.test(password)) {
+      return "Password must contain at least one number.";
+    }
+    return null;
+  };
   const handleSignin = async (e) => {
     e.preventDefault();
+    // Validate password before making API call
+    const passwordError = validatePassword(email, password);
+    if (passwordError) {
+      setMessage(passwordError);
+      return; // Stop if password is invalid
+    }
+    // Attempt to sign in
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
     if (error) {
       setMessage("Error: " + error.message);
     } else {
@@ -25,7 +51,7 @@ export default function Signin() {
     }
   };
 
-  return (
+return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="p-8 bg-white rounded-xl shadow-lg max-w-md w-full">
         <h1 className="text-3xl font-bold text-black mb-6 text-center">
@@ -76,3 +102,4 @@ export default function Signin() {
     </div>
   );
 }
+
