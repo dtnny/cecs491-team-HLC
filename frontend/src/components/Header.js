@@ -7,7 +7,9 @@ import { usePathname, useRouter } from "next/navigation";
 
 export default function Header() {
   const [user, setUser] = useState(null);
+  const [points, setPoints] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
   const dropdownRef = useRef(null);
@@ -16,11 +18,32 @@ export default function Header() {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      if (user) {
+        // Fetch user points
+        const { data } = await supabase
+          .from('user_profiles') // Replace with actual table name
+          .select('points')
+          .eq('user_id', user.id)
+          .single();
+        
+        setPoints(data?.points || 0);
+      }
+      setLoading(false);
     };
+
     fetchUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('points')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        setPoints(data?.points || 0);
+      }
     });
 
     return () => authListener.subscription.unsubscribe();
@@ -49,13 +72,25 @@ export default function Header() {
       <Link href="/" className="text-2xl font-bold text-black">
         Project_name
       </Link>
+      
       <div className="relative flex items-center" ref={dropdownRef}>
+        {user && (
+          <div className="hidden md:flex items-center bg-blue-100 px-8 py-2 rounded-full">
+            <span className="text-blue-800 font-medium mr-2">Points:</span>
+            {loading ? (
+              <span className="animate-pulse">...</span>
+            ) : (
+              <span className="text-black font-semibold">{points}</span>
+            )}
+          </div>
+        )}
         {user ? (
           <div>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="flex items-center text-black font-semibold hover:bg-gray-100 hover:underline rounded px-2 py-1 transition focus:outline-none"
             >
+              <span className="hidden md:inline font-medium">{user?.email?.split('@')[0]}</span>
               <svg
                 className="w-5 h-5 mr-2"
                 fill="none"
@@ -70,8 +105,8 @@ export default function Header() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              Account
             </button>
+
             {isOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
                 <Link
@@ -111,7 +146,7 @@ export default function Header() {
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
                 >
                   Sign Out
                 </button>
