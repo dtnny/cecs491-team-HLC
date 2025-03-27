@@ -72,7 +72,7 @@ export default function Dashboard() {
             className="text-center border border-gray-300 rounded-lg p-6 shadow-lg hover:shadow-xl transition"
           >
             <h2 className="text-xl font-semibold text-black mb-3">Contact Support</h2>
-            <p className="text-black">Get help from our team.</p>
+            <p className="text-black">Learn more about our team.</p>
           </Link>
         </div>
       </section>
