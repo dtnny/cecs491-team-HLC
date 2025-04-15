@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ export default function Signin() {
 
   const handleSignin = async (e) => {
     e.preventDefault();
+    // Attempt to sign in
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -25,7 +26,7 @@ export default function Signin() {
     }
   };
 
-  return (
+return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="p-8 bg-white rounded-xl shadow-lg max-w-md w-full">
         <h1 className="text-3xl font-bold text-black mb-6 text-center">
@@ -76,3 +77,4 @@ export default function Signin() {
     </div>
   );
 }
+
