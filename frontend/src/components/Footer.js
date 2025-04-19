@@ -30,7 +30,7 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-4 flex items-center">
               Project_name
             </h3>
-            <p className="text-gray-400 mb-2">Helping you track losses responsibly since 202</p>
+            <p className="text-gray-400 mb-2">Helping you track losses responsibly since 2025</p>
             <p className="text-gray-400">Version: {appVersion}</p>
           </div>
 

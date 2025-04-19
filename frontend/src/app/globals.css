@@ -1,5 +1,5 @@
-
 @import "tailwindcss";
+@tailwind utilities;
 
 body {
   background-color: #0000; 
@@ -13,4 +13,17 @@ html {
 
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 2s linear infinite;
 }
