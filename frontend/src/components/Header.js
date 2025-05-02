@@ -218,7 +218,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full bg-white p-4 sm:p-6 flex justify-between items-center shadow-lg z-20">
       <Link href="/" className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-        project_name
+        GambLogic
       </Link>
       <div className="relative flex items-center space-x-4" ref={dropdownRef}>
         {user && (

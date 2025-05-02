@@ -42,7 +42,7 @@ export default function Home() {
       {/* Company Logo Section */}
       <section className="pt-16 pb-8 px-4 sm:px-6 lg:px-8 flex justify-center">
         <img
-          src="/logo.png"
+          src="/company_logo.png"
           alt="Company Logo"
           className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg h-auto"
         />

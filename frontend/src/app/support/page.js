@@ -22,7 +22,7 @@ export default function AboutUs() {
   }, []);
 
   const team = [
-    { name: "Danny", role: "Developer" },
+    { name: "Daniel", role: "Developer" },
     { name: "Cristian", role: "Developer" },
     { name: "Ronald", role: "Developer" },
     { name: "Vincent", role: "Developer" },
@@ -35,7 +35,7 @@ export default function AboutUs() {
       {/* Hero Intro */}
       <section className="py-12 text-center">
         <img
-          src="/logo.png"
+          src="/company_logo.png"
           alt="Company Logo"
           className="w-full max-w-xs sm:max-w-sm mx-auto mb-6"
         />
