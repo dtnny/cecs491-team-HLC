@@ -54,8 +54,8 @@ Ensure you have the following installed:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/dtnny/gambling-awareness-app.git
-   cd gambling-awareness-app/frontend
+   git clone https://github.com/dtnny/cecs491-team-HLC.git
+   cd cecs491-team-HLC/frontend
    ```
 
 2. **Install Dependencies**:
@@ -84,7 +84,7 @@ Ensure you have the following installed:
 
 - **Start the Development Server**:
    ```bash
-   cd gambling-awareness-app/frontend
+   cd cecs491-team-HLC/frontend
    npm run dev
    ```
    - Open [http://localhost:3000](http://localhost:3000) in your browser.
