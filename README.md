@@ -1,4 +1,4 @@
-# Gambling Awareness App
+# GambLogic
 
 A web application built with Next.js and Supabase to help users track gambling wins and losses, generate tax reports, and maximize deductions responsibly.
 
