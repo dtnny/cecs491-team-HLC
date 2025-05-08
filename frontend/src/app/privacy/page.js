@@ -1,263 +1,226 @@
 export default function PrivacyPage() {
-
     return (
-        <div className="min-h-screen bg-white pt-20 px-6">
-            <section className="py-10 px-4 container bg-white rounded-lg max-w-4xl mx-auto mb-20">
-                <h1 className="text-4xl font-bold text-black mb-3 text-center">
+        <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8">
+            <section className="py-12 sm:py-16 container mx-auto max-w-5xl bg-white rounded-2xl shadow-xl">
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-8 sm:mb-12 text-center">
                     Privacy Policy
                 </h1>
 
-                <div className="space-y-8 text-black">
-                    <div className="mb-10 text-center">
-                        <p className="not-italic">Last updated April 15, 2025</p>
+                <div className="space-y-6 px-4 sm:px-6">
+                    <div className="bg-gray-50 p-4 rounded-lg text-center mb-8 shadow-lg">
+                        <p className="text-gray-600 text-sm">Last updated April 15, 2025</p>
                     </div>
 
-                    <div className="space-y-8">
-                        <div>
-                            <p className="mb-6">
+                    <div className="space-y-6">
+                        {/* Introduction */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <p className="text-gray-600">
                                 This Privacy Notice for <strong>HLC</strong> ("we," "us," or "our"), describes how and why we might access, collect, store, use, and/or share ("process") your personal information when you use our services.
                             </p>
                         </div>
 
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-2xl font-semibold text-black mb-3">SUMMARY OF KEY POINTS</h2>
-                            <p className="mb-6">
+                        {/* Key Points Summary */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">SUMMARY OF KEY POINTS</h2>
+                            <p className="mb-6 text-gray-600">
                                 <em>This summary provides key points from our Privacy Notice:</em>
                             </p>
-
-                            <ul className="list-disc pl-5 space-y-3 mb-6">
-                                <p>
-                                    <strong>What personal information do we process?</strong> When you use our Services, we may process personal information depending on how you interact with us.<br/>
-                                    <strong>Do we process sensitive personal information?</strong> We may process sensitive information like financial data when necessary with your consent.<br/>
-                                    <strong>Do we collect information from third parties?</strong> We may collect information from public databases and other sources.<br/>
-                                    <strong>How do we process your information?</strong> We process your information to provide and improve our Services, for security, and to comply with law.<br/>
-                                    <strong>What are your rights?</strong> Depending on your location, you may have rights regarding your personal information.
-                                </p>
-                            </ul>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600">
+                                <div className="space-y-2">
+                                    <p className="font-semibold">What personal information do we process?</p>
+                                    <p>Depends on how you interact with our Services</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="font-semibold">Do we process sensitive information?</p>
+                                    <p>Only with your consent when necessary</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="font-semibold">Third-party information sources?</p>
+                                    <p>Public databases and other sources</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="font-semibold">Your rights?</p>
+                                    <p>Vary based on your location</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">1. WHAT INFORMATION DO WE COLLECT?</h2>
-                            <p className="mb-4">
-                                We collect personal information that you voluntarily provide to us when you register for the Services, express an interest in obtaining information about us, or otherwise when you contact us.
+                        {/* Information Collection */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. WHAT INFORMATION DO WE COLLECT?</h2>
+                            <p className="mb-4 text-gray-600">
+                                We collect personal information that you voluntarily provide when registering or contacting us.
                             </p>
-                            <p className="mb-4 font-semibold">Personal Information Provided by You:</p>
-                            <ul className="list-disc pl-5 space-y-2 mb-6">
+                            <p className="mb-4 font-semibold text-gray-900">Personal Information Provided by You:</p>
+                            <ul className="list-disc pl-6 space-y-3 text-gray-600">
                                 <li>Names</li>
                                 <li>Email addresses</li>
                                 <li>Usernames</li>
                                 <li>Passwords</li>
                                 <li>Contact preferences</li>
-                                <li>Debit/credit card numbers</li>
-                                <li>Contact or authentication data</li>
+                                <li>Payment information</li>
+                                <li>Authentication data</li>
                             </ul>
                         </div>
 
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">2. HOW DO WE PROCESS YOUR INFORMATION?</h2>
-                            <p className="mb-4">
-                                We process your information for purposes based on legitimate business interests, the fulfillment of our contract with you, compliance with our legal obligations, and/or your consent.
+                        {/* Information Processing */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. HOW DO WE PROCESS YOUR INFORMATION?</h2>
+                            <p className="mb-4 text-gray-600">
+                                We process information based on legitimate business interests, contractual obligations, legal requirements, and/or your consent.
                             </p>
-                            <p className="mb-4">We process personal information for a variety of reasons, including:</p>
-                            <ul className="list-disc pl-5 space-y-2 mb-6">
-                                <li>To facilitate account creation and authentication</li>
-                                <li>To deliver and facilitate delivery of services</li>
-                                <li>To comply with our legal obligations</li>
+                            <ul className="list-disc pl-6 space-y-3 text-gray-600">
+                                <li>Account creation and authentication</li>
+                                <li>Service delivery and improvement</li>
+                                <li>Legal compliance</li>
                             </ul>
                         </div>
 
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">3. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</h2>
-                            <p className="mb-4">
-                                <em>In Short:</em> We may share information in specific situations described in this section and/or with the following third parties.
-                            </p>
-                            <p className="mb-4">
-                                We may need to share your personal information in the following situations:
-                            </p>
-                            <ul className="list-disc pl-5 space-y-2 mb-6">
-                                <li><strong>Business Transfers.</strong> We may share or transfer your information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.</li>
-                            </ul>
-                        </div>
-
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">4. HOW LONG DO WE KEEP YOUR INFORMATION?</h2>
-                            <p className="mb-4">
-                                <em>In Short:</em> We keep your information for as long as necessary to fulfill the purposes outlined in this Privacy Notice unless otherwise required by law.
-                            </p>
-                            <p className="mb-4">
-                                We will only keep your personal information for as long as it is necessary for the purposes set out in this Privacy Notice, unless a longer retention period is required or permitted by law (such as tax, accounting, or other legal requirements).
-                            </p>
-                        </div>
-
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">5. WHAT ARE YOUR PRIVACY RIGHTS?</h2>
-                            <p className="mb-4">
-                                <em>In Short:</em> You may review, change, or terminate your account at any time.
-                            </p>
-                            <div className="mb-4">
-                                <h3 className="text-lg font-semibold mb-2">Withdrawing your consent:</h3>
-                                <p className="mb-4">
-                                    If we are relying on your consent to process your personal information, you have the right to withdraw your consent at any time.
-                                </p>
-                            </div>
-                            <div className="mb-4">
-                                <h3 className="text-lg font-semibold mb-2">Opting out of marketing and promotional communications:</h3>
-                                <p className="mb-4">
-                                    You can unsubscribe from our marketing and promotional communications at any time by clicking on the unsubscribe link in the emails that we send.
-                                </p>
-                            </div>
-                            <div className="mb-4">
-                                <h3 className="text-lg font-semibold mb-2">Account Information</h3>
-                                <p className="mb-4">
-                                    If you would at any time like to review or change the information in your account or terminate your account, you can:
-                                </p>
-                                <ul className="list-disc pl-5 space-y-2 mb-6">
-                                    <li>Log in to your account settings and update your user account</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">6. CONTROLS FOR DO-NOT-TRACK FEATURES</h2>
-                            <p className="mb-4">
-                                Most web browsers and some mobile operating systems and mobile applications include a Do-Not-Track ("DNT") feature or setting you can activate to signal your privacy preference not to have data about your online browsing activities monitored and collected.
-                            </p>
-                        </div>
-
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">7. DO UNITED STATES RESIDENTS HAVE SPECIFIC PRIVACY RIGHTS?</h2>
-                            <p className="mb-4">
-                                <em>In Short:</em> If you are a resident of California, Colorado, Connecticut, or other US states, you may have additional rights regarding your personal information.
-                            </p>
-                            <div className="mb-4">
-                                <h3 className="text-1x1 font-semibold mb-2">Categories of Personal Information We Collect</h3>
-                                <p className="mb-4">
-                                    We have collected the following categories of personal information in the past twelve (12) months:
-                                </p>
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full border border-gray-200">
-                                        <thead>
-                                            <tr className="bg-gray-50">
-                                                <th className="border border-gray-200 px-4 py-2 text-left font-medium">Category</th>
-                                                <th className="border border-gray-200 px-4 py-2 text-left font-medium">Examples</th>
-                                                <th className="border border-gray-200 px-4 py-2 text-left font-medium">Collected</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Identifiers</td>
-                                                <td className="border border-gray-200 px-4 py-2">Contact details, email addresses, account names</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Personal information as defined in the California Customer Records statute</td>
-                                                <td className="border border-gray-200 px-4 py-2">Name, contact information, financial information</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Protected classification characteristics under state or federal law</td>
-                                                <td className="border border-gray-200 px-4 py-2">Age, gender, marital status</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Commercial information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Transaction information, purchase history</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Biometric information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Fingerprints, voiceprints</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Internet or other similar network activity</td>
-                                                <td className="border border-gray-200 px-4 py-2">Browsing history, search history</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Geolocation data</td>
-                                                <td className="border border-gray-200 px-4 py-2">Device location</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Audio, electronic, sensory, or similar information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Images, audio recordings</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Professional or employment-related information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Job title, work history</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Education Information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Student records, education history</td>
-                                                <td className="border border-gray-200 px-4 py-2">NO</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Inferences drawn from collected personal information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Preferences, characteristics</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="border border-gray-200 px-4 py-2">Sensitive personal Information</td>
-                                                <td className="border border-gray-200 px-4 py-2">Social security numbers, financial data</td>
-                                                <td className="border border-gray-200 px-4 py-2">YES</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                        {/* Information Sharing */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. WHEN DO WE SHARE INFORMATION?</h2>
+                            <div className="space-y-4 text-gray-600">
+                                <p><em>In Short:</em> We may share information in specific situations described below.</p>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Business Transfers</h3>
+                                    <p>Information may be shared during mergers, acquisitions, or asset sales.</p>
                                 </div>
-                                <p className="mt-4 text-sm text-gray-600">
-                                    *We may also collect other personal information outside of these categories through instances where you interact with us in person, online, or by phone or mail.
-                                </p>
-                            </div>
-
-                            <div className="mt-6">
-                                <h3 className="text-lg font-semibold mb-2">Will your information be shared with anyone else?</h3>
-                                <p className="mb-4">
-                                    We may disclose your personal information with our service providers pursuant to a written contract between us and each service provider.
-                                </p>
-                                <p className="mb-4">
-                                    We may use your personal information for our own business purposes, such as for undertaking internal research for technological development and demonstration.
-                                </p>
-                                <p className="mb-4">
-                                    We have not disclosed, sold, or shared any personal information to third parties for a business or commercial purpose in the preceding twelve (12) months. We will not sell or share personal information in the future belonging to website visitors, users, and other consumers.
-                                </p>
                             </div>
                         </div>
 
-                        <div className="border-b border-gray-200 pb-8">
-                            <h2 className="text-1xl font-bold text-black mb-4">8. DO WE MAKE UPDATES TO THIS NOTICE?</h2>
-                            <p className="mb-4">
-                                <em>In Short:</em> Yes, we will update this notice as necessary to stay compliant with relevant laws.
+                        {/* Data Retention */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. HOW LONG DO WE KEEP YOUR INFORMATION?</h2>
+                            <p className="text-gray-600">
+                                <em>In Short:</em> We retain information only as long as necessary for the purposes outlined.
                             </p>
-                            <p className="mb-4">
-                                We may update this Privacy Notice from time to time. The updated version will be indicated by an updated "Revised" date at the top of this Privacy Notice.
-                            </p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-1xl font-bold text-black mb-4">9. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2>
-                            <p className="mb-4">
-                                If you have questions or comments about this notice, you may contact us by post at:
-                            </p>
-                            <address className="not-italic mb-6">
-                                HLC<br />
-                                Our Team Company Information.<br />
-                                United States
-                            </address>
-                        </div>
-
-                        <div className="pt-8 border-t border-gray-200">
-                            <h2 className="text-1xl font-bold text-black mb-4">10. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</h2>
-                            <p className="mb-4">
-                                Based on the applicable laws of your country or state of residence in the US, you may have the right to request access to the personal information we collect from you.
-                            </p>
-                            <p>
-                                To request to review, update, or delete your personal information, please visit: <span href="#">Our website url.</span>
+                            <p className="mt-2 text-gray-600">
+                                We keep your personal information only as long as required by our legal obligations and business needs.
                             </p>
                         </div>
 
+                        {/* Privacy Rights */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. WHAT ARE YOUR PRIVACY RIGHTS?</h2>
+                            <div className="space-y-4 text-gray-600">
+                                <p><em>In Short:</em> You may review, change, or terminate your account at any time.</p>
+                                
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Withdrawing Consent</h3>
+                                    <p>You may withdraw consent for data processing at any time.</p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Marketing Communications</h3>
+                                    <p>Unsubscribe via links in our emails.</p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Management</h3>
+                                    <p>Update information through your account settings.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Do Not Track */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. DO-NOT-TRACK FEATURES</h2>
+                            <p className="text-gray-600">
+                                We honor DNT signals and do not track users who enable this browser setting.
+                            </p>
+                        </div>
+
+                        {/* US Residents Rights */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. US RESIDENT PRIVACY RIGHTS</h2>
+                            <div className="space-y-6 text-gray-600">
+                                <p><em>In Short:</em> Additional rights may apply based on your state of residence.</p>
+                                
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Collected Information Categories</h3>
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full border border-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="border border-gray-200 px-4 py-2 text-left font-medium">Category</th>
+                                                    <th className="border border-gray-200 px-4 py-2 text-left font-medium">Examples</th>
+                                                    <th className="border border-gray-200 px-4 py-2 text-left font-medium">Collected</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td className="border border-gray-200 px-4 py-2">Identifiers</td>
+                                                    <td className="border border-gray-200 px-4 py-2">Contact details, email addresses</td>
+                                                    <td className="border border-gray-200 px-4 py-2">YES</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-gray-200 px-4 py-2">Commercial Information</td>
+                                                    <td className="border border-gray-200 px-4 py-2">Transaction history</td>
+                                                    <td className="border border-gray-200 px-4 py-2">YES</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-gray-200 px-4 py-2">Internet Activity</td>
+                                                    <td className="border border-gray-200 px-4 py-2">Browsing history</td>
+                                                    <td className="border border-gray-200 px-4 py-2">YES</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-gray-200 px-4 py-2">Sensitive Information</td>
+                                                    <td className="border border-gray-200 px-4 py-2">Financial data</td>
+                                                    <td className="border border-gray-200 px-4 py-2">YES</td>
+                                                </tr>
+                                                {/* Add remaining table rows */}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p className="mt-4 text-sm text-gray-600">
+                                        *Additional information may be collected through direct interactions.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Information Sharing</h3>
+                                    <p>No personal information sold or shared in past 12 months.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Policy Updates */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. POLICY UPDATES</h2>
+                            <p className="text-gray-600">
+                                We may update this notice to comply with legal requirements. Changes will be marked with a revised date.
+                            </p>
+                        </div>
+
+                        {/* Contact Information */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. CONTACT US</h2>
+                            <div className="space-y-2 text-gray-600">
+                                <p>For questions or comments:</p>
+                                <address className="not-italic mt-2">
+                                    HLC<br />
+                                    123 Privacy Lane<br />
+                                    Data Protection City, DP 12345<br />
+                                    United States
+                                </address>
+                            </div>
+                        </div>
+
+                        {/* Data Management */}
+                        <div className="border border-gray-200 rounded-xl p-6 shadow-lg">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. DATA MANAGEMENT</h2>
+                            <div className="space-y-2 text-gray-600">
+                                <p>Based on US state laws, you may:</p>
+                                <ul className="list-disc pl-6">
+                                    <li>Request access to your data</li>
+                                    <li>Update or delete information</li>
+                                    <li>Restrict processing</li>
+                                </ul>
+                                <p className="mt-2">
+                                    Manage your data through: <a href="#" className="text-blue-600 hover:underline">Account Settings</a>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
