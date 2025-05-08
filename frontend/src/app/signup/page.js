@@ -8,17 +8,39 @@ import Link from "next/link";
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // Added for confirmation
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false); // Track email field interaction
+  const [confirmTouched, setConfirmTouched] = useState(false); // Track confirmation field interaction
   const router = useRouter();
+
+  // Email validation function (added)
+  const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
+
+    // Validate email format (added)
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
+    // Check if passwords match (added)
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
 
     try {
       // Log session state
@@ -83,6 +105,10 @@ export default function Signup() {
     }
   };
 
+  // Derived validation states (added)
+  const showEmailError = emailTouched && !isValidEmail(email);
+  const showPasswordMismatch = confirmTouched && password !== confirmPassword;
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
@@ -99,10 +125,16 @@ export default function Signup() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              onBlur={() => setEmailTouched(true)} // Added blur handler
+              className={`w-full p-3 border ${showEmailError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
               placeholder="you@example.com"
               required
             />
+            {showEmailError && ( // Added conditional error display
+              <p className="mt-2 text-sm text-red-600">
+                Please enter a valid email address
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="password" className="block text-base font-medium text-gray-700 mb-2">
@@ -117,6 +149,26 @@ export default function Signup() {
               placeholder="••••••••"
               required
             />
+          </div>
+          <div> {/* Added confirmation field */}
+            <label htmlFor="confirmPassword" className="block text-base font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={() => setConfirmTouched(true)} // Added blur handler
+              className={`w-full p-3 border ${showPasswordMismatch ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
+              placeholder="••••••••"
+              required
+            />
+            {showPasswordMismatch && ( // Added conditional error display
+              <p className="mt-2 text-sm text-red-600">
+                Passwords do not match
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="displayName" className="block text-base font-medium text-gray-700 mb-2">
