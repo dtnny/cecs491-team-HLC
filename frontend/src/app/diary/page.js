@@ -1,15 +1,19 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { generateTaxReportPDF } from "@/utils/generateTaxReportPDF";
 
 export default function TaxReport() {
   const [user, setUser] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear().toString());
-  const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState([]);
-  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [generateMessage, setGenerateMessage] = useState("");
   const [page, setPage] = useState(1);
   const router = useRouter();
 
@@ -32,15 +36,14 @@ export default function TaxReport() {
       } else {
         setUser(user);
       }
-      setLoading(false);
     };
     fetchUser();
   }, [router]);
 
   const handleSubmitLog = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setLoading(true);
+    setSubmitMessage("");
+    setSubmitting(true);
 
     const { error } = await supabase.from("gambling_logs").insert([
       {
@@ -52,9 +55,9 @@ export default function TaxReport() {
     ]);
 
     if (error) {
-      setMessage("Error submitting entry: " + error.message);
+      setSubmitMessage("❌ Error: " + error.message);
     } else {
-      setMessage("Entry submitted successfully.");
+      setSubmitMessage("✅ Entry submitted successfully!");
       setFormData({
         date: "",
         type: "",
@@ -64,13 +67,13 @@ export default function TaxReport() {
         result: "win",
       });
     }
-    setLoading(false);
+    setSubmitting(false);
   };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setLoading(true);
+    setGenerateMessage("");
+    setGenerating(true);
 
     const { data, error } = await supabase
       .from("gambling_logs")
@@ -81,35 +84,52 @@ export default function TaxReport() {
       .order("date", { ascending: true });
 
     if (error) {
-      setMessage("Error fetching entries: " + error.message);
+      setGenerateMessage("❌ Error fetching entries: " + error.message);
     } else {
       setEntries(data);
-      setMessage("");
+
+      // Fetch logo and convert to base64
+      const res = await fetch("/company_logo.png");
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Logo = reader.result;
+        generateTaxReportPDF(data, year, base64Logo);
+      };
+      reader.readAsDataURL(blob);
     }
-    setLoading(false);
+    setGenerating(false);
   };
 
   if (!user) return null;
 
   const totalPages = Math.ceil(entries.length / ENTRIES_PER_PAGE);
-  const paginatedEntries = entries.slice((page - 1) * ENTRIES_PER_PAGE, page * ENTRIES_PER_PAGE);
+  const paginated = entries.slice((page - 1) * ENTRIES_PER_PAGE, page * ENTRIES_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8 text-black">
-      <section className="py-12 sm:py-16 container mx-auto max-w-4xl bg-white rounded-2xl shadow-xl text-black">
-        <h1 className="text-4xl font-extrabold text-center mb-2">
-          {year} Gambling Entry Log
-        </h1>
+    <div className="min-h-screen bg-gray-50 pt-20 px-4 lg:px-8 text-black">
+      <section className="mx-auto max-w-4xl bg-white rounded-2xl shadow-xl py-12 px-6 text-black">
 
-        <form onSubmit={handleSubmitLog} className="space-y-4 px-6 text-black">
-          <div>
-            <label className="block mb-1">Date</label>
-            <input type="date" name="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full p-2 border rounded text-black" required />
-          </div>
-          <div>
-            <label className="block mb-1">Type</label>
-            <input type="text" name="type" value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full p-2 border rounded text-black" required />
-          </div>
+        <h2 className="text-2xl font-bold mb-4">Submit a Gambling Log</h2>
+        <form onSubmit={handleSubmitLog} className="space-y-4">
+          {[
+            { label: "Date", name: "date", type: "date" },
+            { label: "Type", name: "type" },
+            { label: "Specific Location", name: "specificLocation" },
+            { label: "Amount", name: "amount", type: "number" }
+          ].map(({ label, name, type = "text" }) => (
+            <div key={name}>
+              <label className="block mb-1">{label}</label>
+              <input
+                type={type}
+                name={name}
+                value={formData[name]}
+                onChange={(e) => setFormData({ ...formData, [name]: e.target.value })}
+                className="w-full p-2 border rounded text-black"
+                required
+              />
+            </div>
+          ))}
           <div>
             <label className="block mb-1">Location Category</label>
             <select name="locationCategory" value={formData.locationCategory} onChange={(e) => setFormData({ ...formData, locationCategory: e.target.value })} className="w-full p-2 border rounded text-black" required>
@@ -121,91 +141,57 @@ export default function TaxReport() {
             </select>
           </div>
           <div>
-            <label className="block mb-1">Specific Location</label>
-            <input type="text" name="specificLocation" value={formData.specificLocation} onChange={(e) => setFormData({ ...formData, specificLocation: e.target.value })} className="w-full p-2 border rounded text-black" required />
-          </div>
-          <div>
-            <label className="block mb-1">Amount</label>
-            <input type="number" name="amount" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="w-full p-2 border rounded text-black" required />
-          </div>
-          <div>
             <label className="block mb-1">Result</label>
             <select name="result" value={formData.result} onChange={(e) => setFormData({ ...formData, result: e.target.value })} className="w-full p-2 border rounded text-black" required>
               <option value="win">Win</option>
               <option value="loss">Loss</option>
             </select>
           </div>
-          <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded">Submit Log Entry</button>
+          <button type="submit" disabled={submitting} className="bg-green-600 text-white px-6 py-2 rounded disabled:opacity-50">
+            {submitting ? "Submitting…" : "Submit Log Entry"}
+          </button>
         </form>
-
-        <form onSubmit={handleGenerate} className="px-6 sm:px-8 mt-12 mb-10 text-black">
-          <div className="flex items-end space-x-4">
-            <div className="flex-1">
-              <label htmlFor="year" className="block text-sm font-medium mb-2">
-                Tax Year
-              </label>
-              <select
-                id="year"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-              >
-                {[2025, 2024, 2023, 2022].map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 disabled:bg-blue-400"
-            >
-              {loading ? "Loading..." : "Generate Report"}
-            </button>
-          </div>
-        </form>
-
-        {entries.length > 0 && (
-          <div className="space-y-6 px-6 text-black">
-            {paginatedEntries.map((entry, idx) => (
-              <div key={idx} className="border border-gray-300 p-4 rounded-lg shadow-sm">
-                <p><strong>Date:</strong> {entry.date}</p>
-                <p><strong>Type:</strong> {entry.type}</p>
-                <p><strong>Location Category:</strong> {entry.locationCategory}</p>
-                <p><strong>Specific Location:</strong> {entry.specificLocation}</p>
-                <p><strong>Amount:</strong> ${parseFloat(entry.amount).toFixed(2)}</p>
-                <p><strong>Result:</strong> {entry.result}</p>
-              </div>
-            ))}
-
-            <div className="flex justify-between items-center pt-6">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page <= 1}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page >= totalPages}
-                className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+        {submitMessage && (
+          <p className={`mt-2 text-sm ${submitMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+            {submitMessage}
+          </p>
         )}
 
-        {message && (
-          <p className={`mt-6 text-center text-sm ${message.includes("Error") ? "text-red-600" : "text-green-600"}`}>
-            {message}
-          </p>
+        <h2 className="text-2xl font-bold mt-12 mb-4">Generate Report</h2>
+        <form onSubmit={handleGenerate} className="flex items-end space-x-4 mb-8">
+          <div>
+            <label className="block text-sm mb-2">Tax Year</label>
+            <select value={year} onChange={(e) => setYear(e.target.value)} className="w-full p-3 border rounded-lg text-black">
+              {[2025, 2024, 2023, 2022].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" disabled={generating} className="bg-blue-600 text-white px-6 py-3 rounded disabled:opacity-50">
+            {generating ? "Loading…" : "Generate Report"}
+          </button>
+        </form>
+        {generateMessage && (
+          <p className="mt-2 text-sm text-red-600">{generateMessage}</p>
+        )}
+
+        {paginated.map((entry, idx) => (
+          <div key={idx} className="border border-gray-300 p-4 rounded-lg shadow-sm mb-4">
+            <p><strong>Date:</strong> {entry.date}</p>
+            <p><strong>Type:</strong> {entry.type}</p>
+            <p><strong>Location Category:</strong> {entry.locationCategory}</p>
+            <p><strong>Specific Location:</strong> {entry.specificLocation}</p>
+            <p><strong>Amount:</strong> ${parseFloat(entry.amount).toFixed(2)}</p>
+            <p><strong>Result:</strong> {entry.result}</p>
+          </div>
+        ))}
+
+        {entries.length > ENTRIES_PER_PAGE && (
+          <div className="flex justify-between items-center pt-6">
+            <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Previous</button>
+            <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(page + 1)} disabled={page >= totalPages} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Next</button>
+          </div>
         )}
       </section>
     </div>
