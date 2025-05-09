@@ -95,13 +95,13 @@ export default function TaxReport() {
   const paginatedEntries = entries.slice((page - 1) * ENTRIES_PER_PAGE, page * ENTRIES_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8">
-      <section className="py-12 sm:py-16 container mx-auto max-w-4xl bg-white rounded-2xl shadow-xl">
-        <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-2">
+    <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8 text-black">
+      <section className="py-12 sm:py-16 container mx-auto max-w-4xl bg-white rounded-2xl shadow-xl text-black">
+        <h1 className="text-4xl font-extrabold text-center mb-2">
           {year} Gambling Entry Log
         </h1>
 
-        <form onSubmit={handleSubmitLog} className="space-y-4 px-6">
+        <form onSubmit={handleSubmitLog} className="space-y-4 px-6 text-black">
           <div>
             <label className="block mb-1">Date</label>
             <input type="date" name="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full p-2 border rounded text-black" required />
@@ -138,10 +138,10 @@ export default function TaxReport() {
           <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded">Submit Log Entry</button>
         </form>
 
-        <form onSubmit={handleGenerate} className="px-6 sm:px-8 mt-12 mb-10">
+        <form onSubmit={handleGenerate} className="px-6 sm:px-8 mt-12 mb-10 text-black">
           <div className="flex items-end space-x-4">
             <div className="flex-1">
-              <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="year" className="block text-sm font-medium mb-2">
                 Tax Year
               </label>
               <select
@@ -168,7 +168,7 @@ export default function TaxReport() {
         </form>
 
         {entries.length > 0 && (
-          <div className="space-y-6 px-6">
+          <div className="space-y-6 px-6 text-black">
             {paginatedEntries.map((entry, idx) => (
               <div key={idx} className="border border-gray-300 p-4 rounded-lg shadow-sm">
                 <p><strong>Date:</strong> {entry.date}</p>
