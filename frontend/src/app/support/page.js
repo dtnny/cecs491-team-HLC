@@ -40,7 +40,7 @@ export default function AboutUs() {
           className="w-full max-w-xs sm:max-w-sm mx-auto mb-6"
         />
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
-          About project_name
+          About GambLogic
         </h1>
         <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
           Empowering responsible gambling through innovative technology.
