@@ -5,7 +5,7 @@ import Link from "next/link";
 import "@fortawesome/fontawesome-free/css/all.min.css"; // Add this line
 
 export const metadata = {
-  title: "Gambling Awareness App",
+  title: "GambLogic",
   description: "Track and manage your gambling activities responsibly.",
 };
 

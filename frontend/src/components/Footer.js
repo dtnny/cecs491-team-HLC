@@ -30,7 +30,7 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-4 flex items-center">
               GambLogic
             </h3>
-            <p className="text-gray-400 mb-2">Helping you track losses responsibly since 2025</p>
+            <p className="text-gray-400 mb-2">Helping you track losses responsibly since 2025.</p>
             <p className="text-gray-400">Version: {appVersion}</p>
           </div>
 
@@ -41,11 +41,12 @@ export default function Footer() {
               <li><a href="/privacy" className="text-gray-400 hover:text-blue-400 transition">Privacy Policy</a></li>
               <li><a href="/terms" className="text-gray-400 hover:text-blue-400 transition">Terms of Service</a></li>
               <li><a href="/support" className="text-gray-400 hover:text-blue-400 transition">Help Center</a></li>
-              <li><a href="/responsible-gambling" className="text-gray-400 hover:text-blue-400 transition">Responsible Gambling</a></li>
+              <li><a href="https://en.wikipedia.org/wiki/Responsible_gambling" className="text-gray-400 hover:text-blue-400 transition">Responsible Gambling</a></li>
             </ul>
           </div>
           <div> {/* spacing */}
           </div>
+          
           {/* Social Media */}
           <div>
             <h4 className="text-lg font-semibold mb-4">Connect With Us</h4>
