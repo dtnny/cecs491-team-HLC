@@ -45,12 +45,16 @@ export default function TaxReport() {
     setSubmitMessage("");
     setSubmitting(true);
 
+    const date = formData.date
+      ? new Date(formData.date).toISOString()
+      : new Date().toISOString();
+
     const { error } = await supabase.from("gambling_logs").insert([
       {
         user_id: user.id,
         ...formData,
+        date,
         amount: parseFloat(formData.amount),
-        date: formData.date,
       },
     ]);
 
@@ -70,34 +74,49 @@ export default function TaxReport() {
     setSubmitting(false);
   };
 
+  const convertBlobToBase64 = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
   const handleGenerate = async (e) => {
     e.preventDefault();
     setGenerateMessage("");
     setGenerating(true);
 
+    const from = `${year}-01-01T00:00:00`;
+    const to = `${year}-12-31T23:59:59`;
+
     const { data, error } = await supabase
       .from("gambling_logs")
       .select("*")
       .eq("user_id", user.id)
-      .gte("date", `${year}-01-01`)
-      .lte("date", `${year}-12-31`)
+      .gte("date", from)
+      .lte("date", to)
       .order("date", { ascending: true });
 
     if (error) {
       setGenerateMessage("❌ Error fetching entries: " + error.message);
-    } else {
-      setEntries(data);
-
-      // Fetch logo and convert to base64
-      const res = await fetch("/company_logo.png");
-      const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Logo = reader.result;
-        generateTaxReportPDF(data, year, base64Logo);
-      };
-      reader.readAsDataURL(blob);
+      setGenerating(false);
+      return;
     }
+
+    if (!data || data.length === 0) {
+      setGenerateMessage("No entries found for this year.");
+      setGenerating(false);
+      return;
+    }
+
+    setEntries(data);
+
+    const res = await fetch("/company_logo.png");
+    const blob = await res.blob();
+    const base64Logo = await convertBlobToBase64(blob);
+
+    generateTaxReportPDF(data, year, base64Logo);
     setGenerating(false);
   };
 
@@ -109,11 +128,10 @@ export default function TaxReport() {
   return (
     <div className="min-h-screen bg-gray-50 pt-20 px-4 lg:px-8 text-black">
       <section className="mx-auto max-w-4xl bg-white rounded-2xl shadow-xl py-12 px-6 text-black">
-
         <h2 className="text-2xl font-bold mb-4">Submit a Gambling Log</h2>
         <form onSubmit={handleSubmitLog} className="space-y-4">
           {[
-            { label: "Date", name: "date", type: "date" },
+            { label: "Date", name: "date", type: "datetime-local" },
             { label: "Type", name: "type" },
             { label: "Specific Location", name: "specificLocation" },
             { label: "Amount", name: "amount", type: "number" }
