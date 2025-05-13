@@ -2,7 +2,7 @@
 
 A web application built with Next.js and Supabase to help users track gambling wins and losses, generate tax reports, and maximize deductions responsibly.
 
-- [Gambling Awareness App](#gambling-awareness-app)
+- [Gamblogic](#gamblogic)
   * [Synopsis](#synopsis)
   * [Motivation](#motivation)
   * [Features](#features)
@@ -10,15 +10,9 @@ A web application built with Next.js and Supabase to help users track gambling w
     + [Prerequisites](#prerequisites)
     + [Installation](#installation)
     + [Running the Application](#running-the-application)
-    + [Running with Visual Studio Code](#running-with-visual-studio-code)
-  * [Operational Flow](#operational-flow)
-  * [Supported Functionality](#supported-functionality)
-  * [Built With](#built-with)
-  * [Limitations](#limitations)
-  * [Future Improvements](#future-improvements)
   * [Authors](#authors)
   * [Acknowledgments](#acknowledgments)
-  * [Screenshots](#screenshots)
+  * [Documentation](#documentation)
 
 ## Synopsis
 
@@ -104,3 +98,7 @@ Ensure you have the following installed:
 - **Supabase Documentation**: For guiding authentication and database setup.
 - **Next.js Documentation**: For App Router and Tailwind integration.
 - **Tailwind CSS**: For rapid, responsive styling.
+
+## Documentation
+
+- [Architecture Documentation](frontend/docs/architecture.md): Detailed overview of the app's structure, data flow, and design decisions.

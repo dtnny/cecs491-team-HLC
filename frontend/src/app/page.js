@@ -81,14 +81,29 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="text-center border border-gray-200 rounded-xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">1. Enter Your Data</h3>
+              <img
+                src="enter_data.png"
+                alt="Enter Your Data Illustration"
+                className="mt-4 mx-auto w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg"
+              />
               <p className="text-gray-600">Log your gambling winnings and losses into our secure database.</p>
             </div>
             <div className="text-center border border-gray-200 rounded-xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">2. Upload Documents</h3>
+              <img
+                src="upload_documents.png"
+                alt="Upload Documents Illustration"
+                className="mt-4 mx-auto w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg"
+              />
               <p className="text-gray-600">Submit your betting records or receipts effortlessly.</p>
             </div>
             <div className="text-center border border-gray-200 rounded-xl p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">3. Get Your Tax Cut</h3>
+              <img
+                src="get_tax_cut.png"
+                alt="Get Your Tax Cut Illustration"
+                className="mt-4 mx-auto w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-lg"
+              />
               <p className="text-gray-600">Generate tax reports and claim your deductions with ease.</p>
             </div>
           </div>
@@ -120,16 +135,33 @@ export default function Home() {
 
       {/* Sports Betting & Taxes 101 Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-12">
-            Sports Betting & Taxes 101
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto mb-6">
-            Sports betting winnings are taxable income in most jurisdictions. Losses can often be deducted, but only if properly documented. Our tool helps you track every bet, ensuring you qualify for deductions and comply with tax laws.
-          </p>
-          <Link href="/learn-more" className="text-blue-600 font-semibold hover:underline">
-            Read More About Tax Rules
-          </Link>
+        {/* Adjusted container to use flex for side-by-side layout */}
+        <div className="container mx-auto max-w-6xl flex flex-col md:flex-row items-center"> 
+          
+          {/* Image Column */}
+          <div className="md:w-7/12 lg:w-3/5 p-4 flex justify-center md:justify-start"> 
+            <img 
+              src="sports_betting.png"  
+              alt="Sports Betting Visual" 
+              className="max-w-full h-auto rounded-lg" 
+            />
+          </div>
+
+          {/* Text Content Column */}
+          <div className="md:w-1/2 lg:w-3/5 p-4 text-center md:text-left"> 
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-8"> 
+              Sports Betting & Taxes 101
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto md:mx-0 mb-6"> 
+              Sports betting winnings are taxable income in most jurisdictions. Losses can often be deducted, but only if properly documented. Our tool helps you track every bet, ensuring you qualify for deductions and comply with tax laws.
+            </p>
+            <Link 
+              href="https://www.irs.gov/taxtopics/tc419" 
+              className="text-blue-600 font-semibold hover:underline inline-block" 
+            >
+              Read More About Tax Rules
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -171,7 +203,7 @@ export default function Home() {
             <img
               src="2302952.png"
               alt="Gambling Awareness Security Logo"
-              className="w-full max-w-xs sm:max-w-sm rounded-lg shadow-md"
+              className="w-full max-w-xs sm:max-w-sm rounded-lg "
             />
           </div>
         </div>
