@@ -44,6 +44,10 @@ export default function TaxReport() {
     setSubmitMessage("");
     setSubmitting(true);
 
+    const date = formData.date
+      ? new Date(formData.date).toISOString()
+      : new Date().toISOString();
+
     const { error } = await supabase.from("gambling_logs").insert([
       {
         user_id: user.id,
@@ -53,55 +57,52 @@ export default function TaxReport() {
       },
     ]);
 
-    if (logError) {
-      setSubmitMessage("❌ Error: " + logError.message);
-      setSubmitting(false);
-      return;
+    if (error) {
+      setSubmitMessage("❌ Error: " + error.message);
+    } else {
+      setSubmitMessage("✅ Entry submitted successfully!");
+      setFormData({
+        date: "",
+        type: "",
+        locationCategory: "",
+        specificLocation: "",
+        amount: "",
+        result: "win",
+      });
+
+      // Add 50 points to user_points
+      let pointsMessage = "";
+      try {
+        const { data: pointsData, error: fetchError } = await supabase
+          .from("user_points")
+          .select("points")
+          .eq("user_id", user.id)
+          .single();
+
+        if (fetchError) throw new Error("Failed to fetch points: " + fetchError.message);
+
+        const currentPoints = pointsData?.points || 0;
+        const newPoints = currentPoints + 50;
+
+        const { error: updateError } = await supabase
+          .from("user_points")
+          .upsert([
+            {
+              user_id: user.id,
+              points: newPoints,
+              updated_at: new Date().toISOString(),
+            },
+          ]);
+
+        if (updateError) throw new Error("Failed to update points: " + updateError.message);
+
+        pointsMessage = " You earned 50 points! 🎉";
+      } catch (error) {
+        pointsMessage = " Points update failed: " + error.message;
+      }
+
+      setSubmitMessage("✅ Entry submitted successfully!" + pointsMessage);
     }
-
-    // Step 2: Update user points (+250)
-    let pointsMessage = "";
-    try {
-      // Fetch current points
-      const { data: pointsData, error: fetchError } = await supabase
-        .from("user_points")
-        .select("points")
-        .eq("user_id", user.id)
-        .single();
-
-      if (fetchError) throw new Error("Failed to fetch points: " + fetchError.message);
-
-      const currentPoints = pointsData?.points || 0;
-      const newPoints = currentPoints + 250;
-
-      // Update points
-      const { error: updateError } = await supabase
-        .from("user_points")
-        .upsert([
-          {
-            user_id: user.id,
-            points: newPoints,
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-
-      if (updateError) throw new Error("Failed to update points: " + updateError.message);
-
-      pointsMessage = " You earned 250 points!";
-    } catch (error) {
-      pointsMessage = " Points update failed: " + error.message;
-    }
-
-    // Step 3: Set success message and reset form
-    setSubmitMessage("✅ Entry submitted successfully!" + pointsMessage);
-    setFormData({
-      date: "",
-      type: "",
-      locationCategory: "",
-      specificLocation: "",
-      amount: "",
-      result: "win",
-    });
     setSubmitting(false);
   };
 
@@ -181,13 +182,7 @@ export default function TaxReport() {
           ))}
           <div>
             <label className="block mb-1">Location Category</label>
-            <select
-              name="locationCategory"
-              value={formData.locationCategory}
-              onChange={(e) => setFormData({ ...formData, locationCategory: e.target.value })}
-              className="w-full p-2 border rounded text-black"
-              required
-            >
+            <select name="locationCategory" value={formData.locationCategory} onChange={(e) => setFormData({ ...formData, locationCategory: e.target.value })} className="w-full p-2 border rounded text-black" required>
               <option value="">Select</option>
               <option value="Casino">Casino</option>
               <option value="Website">Website</option>
@@ -197,30 +192,17 @@ export default function TaxReport() {
           </div>
           <div>
             <label className="block mb-1">Result</label>
-            <select
-              name="result"
-              value={formData.result}
-              onChange={(e) => setFormData({ ...formData, result: e.target.value })}
-              className="w-full p-2 border rounded text-black"
-              required
-            >
+            <select name="result" value={formData.result} onChange={(e) => setFormData({ ...formData, result: e.target.value })} className="w-full p-2 border rounded text-black" required>
               <option value="win">Win</option>
               <option value="loss">Loss</option>
             </select>
           </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-green-600 text-white px-6 py-2 rounded disabled:opacity-50"
-          >
+          <button type="submit" disabled={submitting} className="bg-green-600 text-white px-6 py-2 rounded disabled:opacity-50">
             {submitting ? "Submitting…" : "Submit Log Entry"}
           </button>
         </form>
         {submitMessage && (
-          <p
-            className={`mt-2 text-sm ${submitMessage.startsWith("✅") ? "text-green-600" : "text-red-600"
-              }`}
-          >
+          <p className={`mt-2 text-sm ${submitMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
             {submitMessage}
           </p>
         )}
@@ -229,23 +211,13 @@ export default function TaxReport() {
         <form onSubmit={handleGenerate} className="flex items-end space-x-4 mb-8">
           <div>
             <label className="block text-sm mb-2">Tax Year</label>
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className="w-full p-3 border rounded-lg text-black"
-            >
+            <select value={year} onChange={(e) => setYear(e.target.value)} className="w-full p-3 border rounded-lg text-black">
               {[2025, 2024, 2023, 2022].map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
+                <option key={y} value={y}>{y}</option>
               ))}
             </select>
           </div>
-          <button
-            type="submit"
-            disabled={generating}
-            className="bg-blue-600 text-white px-6 py-3 rounded disabled:opacity-50"
-          >
+          <button type="submit" disabled={generating} className="bg-blue-600 text-white px-6 py-3 rounded disabled:opacity-50">
             {generating ? "Loading…" : "Generate Report"}
           </button>
         </form>
@@ -255,46 +227,20 @@ export default function TaxReport() {
 
         {paginated.map((entry, idx) => (
           <div key={idx} className="border border-gray-300 p-4 rounded-lg shadow-sm mb-4">
-            <p>
-              <strong>Date:</strong> {entry.date}
-            </p>
-            <p>
-              <strong>Type:</strong> {entry.type}
-            </p>
-            <p>
-              <strong>Location Category:</strong> {entry.locationCategory}
-            </p>
-            <p>
-              <strong>Specific Location:</strong> {entry.specificLocation}
-            </p>
-            <p>
-              <strong>Amount:</strong> ${parseFloat(entry.amount).toFixed(2)}
-            </p>
-            <p>
-              <strong>Result:</strong> {entry.result}
-            </p>
+            <p><strong>Date:</strong> {entry.date}</p>
+            <p><strong>Type:</strong> {entry.type}</p>
+            <p><strong>Location Category:</strong> {entry.locationCategory}</p>
+            <p><strong>Specific Location:</strong> {entry.specificLocation}</p>
+            <p><strong>Amount:</strong> ${parseFloat(entry.amount).toFixed(2)}</p>
+            <p><strong>Result:</strong> {entry.result}</p>
           </div>
         ))}
 
         {entries.length > ENTRIES_PER_PAGE && (
           <div className="flex justify-between items-center pt-6">
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page <= 1}
-              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-600">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page >= totalPages}
-              className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
+            <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Previous</button>
+            <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(page + 1)} disabled={page >= totalPages} className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50">Next</button>
           </div>
         )}
       </section>
