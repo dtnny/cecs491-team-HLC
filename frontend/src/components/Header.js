@@ -17,6 +17,11 @@ export default function Header() {
   const pointsSubscriptionRef = useRef(null);
   const profileSubscriptionRef = useRef(null);
 
+  // --- animation state ---
+  const prevPointsRef = useRef(null);
+  const [delta, setDelta] = useState(0);           // difference from previous points
+  const [anim, setAnim] = useState(null);          // 'up' | 'down' | null
+
   const fetchPoints = async (userId) => {
     const { data, error } = await supabase
       .from("user_points")
@@ -70,14 +75,18 @@ export default function Header() {
           .on(
             "postgres_changes",
             {
-              event: "UPDATE",
+              event: "*", // listen to INSERT, UPDATE, DELETE
               schema: "public",
               table: "user_points",
               filter: `user_id=eq.${user.id}`,
             },
             (payload) => {
               console.log("Real-time points update received:", payload);
-              setPoints(payload.new.points);
+              if (payload.new?.points !== undefined) {
+                setPoints(payload.new.points);
+              } else if (payload.old?.points !== undefined && payload.eventType === "DELETE") {
+                setPoints(0);
+              }
             }
           )
           .subscribe((status) => {
@@ -122,10 +131,12 @@ export default function Header() {
         if (pointsSubscriptionRef.current) {
           console.log("Removing existing points subscription");
           supabase.removeChannel(pointsSubscriptionRef.current);
+          pointsSubscriptionRef.current = null;
         }
         if (profileSubscriptionRef.current) {
           console.log("Removing existing profile subscription");
           supabase.removeChannel(profileSubscriptionRef.current);
+          profileSubscriptionRef.current = null;
         }
 
         console.log("Setting up points subscription for new user:", newUser.id);
@@ -134,14 +145,18 @@ export default function Header() {
           .on(
             "postgres_changes",
             {
-              event: "UPDATE",
+              event: "*",
               schema: "public",
               table: "user_points",
               filter: `user_id=eq.${newUser.id}`,
             },
             (payload) => {
               console.log("Real-time points update received:", payload);
-              setPoints(payload.new.points);
+              if (payload.new?.points !== undefined) {
+                setPoints(payload.new.points);
+              } else if (payload.old?.points !== undefined && payload.eventType === "DELETE") {
+                setPoints(0);
+              }
             }
           )
           .subscribe((status) => {
@@ -188,14 +203,33 @@ export default function Header() {
       if (pointsSubscriptionRef.current) {
         console.log("Cleaning up points subscription on unmount");
         supabase.removeChannel(pointsSubscriptionRef.current);
+        pointsSubscriptionRef.current = null;
       }
       if (profileSubscriptionRef.current) {
         console.log("Cleaning up profile subscription on unmount");
         supabase.removeChannel(profileSubscriptionRef.current);
+        profileSubscriptionRef.current = null;
       }
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // --- animate when points change ---
+  useEffect(() => {
+    if (prevPointsRef.current === null) {
+      prevPointsRef.current = points;
+      return;
+    }
+    if (points !== prevPointsRef.current) {
+      const d = points - prevPointsRef.current;
+      setDelta(d);
+      setAnim(d > 0 ? "up" : "down");
+      prevPointsRef.current = points;
+
+      const t = setTimeout(() => setAnim(null), 900); // clear animation after ~0.9s
+      return () => clearTimeout(t);
+    }
+  }, [points]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -222,13 +256,42 @@ export default function Header() {
       </Link>
       <div className="relative flex items-center space-x-4" ref={dropdownRef}>
         {user && (
-          <div className="flex items-center bg-blue-50 px-4 py-2 rounded-full transition-all duration-300 hover:bg-blue-100">
-            <i className="fas fa-star text-yellow-400 text-2xl mr-2"></i>
-            <span className="text-blue-800 font-medium hidden sm:inline">Points: </span>
-            {loading ? (
-              <div className="w-12 h-5 bg-gray-200 rounded animate-pulse"></div>
-            ) : (
-              <span className="text-gray-900 font-semibold">{points}</span>
+          <div className="relative">
+            <div
+              className={[
+                "flex items-center px-4 py-2 rounded-full transition-all duration-300",
+                anim === "up" && "coin-bump bg-green-50 ring-2 ring-green-300",
+                anim === "down" && "coin-shake bg-red-50 ring-2 ring-red-300",
+                !anim && "bg-blue-50 hover:bg-blue-100",
+              ].join(" ")}
+            >
+              <i className="fas fa-star text-yellow-400 text-2xl mr-2"></i>
+              <span className="text-blue-800 font-medium hidden sm:inline">Points: </span>
+              {loading ? (
+                <div className="w-12 h-5 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                <span
+                  className={[
+                    "text-gray-900 font-semibold",
+                    anim === "up" && "text-green-700",
+                    anim === "down" && "text-red-700",
+                  ].join(" ")}
+                >
+                  {points}
+                </span>
+              )}
+            </div>
+
+            {/* floating +N / -N */}
+            {anim && delta !== 0 && (
+              <span
+                className={[
+                  "absolute -top-3 right-1 text-sm font-bold pointer-events-none",
+                  anim === "up" ? "text-green-600 float-up" : "text-red-600 float-down",
+                ].join(" ")}
+              >
+                {delta > 0 ? `+${delta}` : `${delta}`}
+              </span>
             )}
           </div>
         )}
@@ -307,6 +370,40 @@ export default function Header() {
             opacity: 1;
           }
         }
+
+        /* bump for increases */
+        @keyframes coin-bump-kf {
+          0% { transform: scale(1); }
+          30% { transform: scale(1.12); }
+          60% { transform: scale(0.98); }
+          100% { transform: scale(1); }
+        }
+        .coin-bump { animation: coin-bump-kf 0.6s ease-out both; }
+
+        /* shake for decreases */
+        @keyframes coin-shake-kf {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-3px); }
+          40% { transform: translateX(3px); }
+          60% { transform: translateX(-2px); }
+          80% { transform: translateX(2px); }
+        }
+        .coin-shake { animation: coin-shake-kf 0.6s ease; }
+
+        /* floaters */
+        @keyframes float-up-kf {
+          0% { transform: translateY(6px); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translateY(-14px); opacity: 0; }
+        }
+        .float-up { animation: float-up-kf 0.9s ease-out both; }
+
+        @keyframes float-down-kf {
+          0% { transform: translateY(-6px); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translateY(14px); opacity: 0; }
+        }
+        .float-down { animation: float-down-kf 0.9s ease-in both; }
       `}</style>
     </header>
   );

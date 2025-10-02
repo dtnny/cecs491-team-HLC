@@ -8,19 +8,16 @@ import Link from "next/link";
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // Added for confirmation
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [emailTouched, setEmailTouched] = useState(false); // Track email field interaction
-  const [confirmTouched, setConfirmTouched] = useState(false); // Track confirmation field interaction
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
   const router = useRouter();
 
-  // Email validation function (added)
-  const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -28,14 +25,11 @@ export default function Signup() {
     setMessage("");
     setLoading(true);
 
-    // Validate email format (added)
     if (!isValidEmail(email)) {
       setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
-
-    // Check if passwords match (added)
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -43,69 +37,31 @@ export default function Signup() {
     }
 
     try {
-      // Log session state
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log("Session before signup:", currentUser ? currentUser.id : "No session");
-
-      // Sign up user
-      const { data: { user }, error: authError } = await supabase.auth.signUp({
+      // Sign up (username is optional; send it if provided)
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { display_name: displayName },
+          // IMPORTANT: use "username" key so our DB trigger picks it up
+          data: displayName ? { username: displayName } : {},
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
-      if (authError) {
-        console.error("Auth error during signup:", authError);
-        throw new Error(authError.message);
-      }
+      if (authError) throw authError;
 
-      if (!user) {
-        throw new Error("No user returned after signup");
-      }
-
-      console.log("User signed up:", user.id);
-
-      // Log session after signup
-      const { data: { user: postSignupUser } } = await supabase.auth.getUser();
-      console.log("Session after signup:", postSignupUser ? postSignupUser.id : "No session");
-
-      // Create user profile via server-side function
-      const { error: profileError } = await supabase
-        .rpc("create_user_profile", {
-          p_user_id: user.id,
-          p_display_name: displayName || user.email.split("@")[0],
-        });
-
-      if (profileError) {
-        console.error("Error creating user profile:", profileError);
-        // Check if profile was created despite error
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("user_id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (!profile) {
-          throw new Error("Database error creating user profile: " + profileError.message);
-        }
-        console.log("Profile exists despite error:", profile);
-      }
-
-      console.log("User profile created for user:", user.id);
-
-      // user_points is handled by trigger
-      setMessage("Signup successful! Please check your email to confirm your account.");
+      // For email signups, Supabase often returns user = null until confirmation.
+      // So don't rely on user here; just inform and exit gracefully.
+      setMessage(
+        "Signup successful! Please check your email to confirm your account. Once confirmed, your profile & points will be created automatically."
+      );
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Something went wrong during signup.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Derived validation states (added)
   const showEmailError = emailTouched && !isValidEmail(email);
   const showPasswordMismatch = confirmTouched && password !== confirmPassword;
 
@@ -125,17 +81,16 @@ export default function Signup() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setEmailTouched(true)} // Added blur handler
-              className={`w-full p-3 border ${showEmailError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
+              onBlur={() => setEmailTouched(true)}
+              className={`w-full p-3 border ${showEmailError ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
               placeholder="you@example.com"
               required
             />
-            {showEmailError && ( // Added conditional error display
-              <p className="mt-2 text-sm text-red-600">
-                Please enter a valid email address
-              </p>
+            {showEmailError && (
+              <p className="mt-2 text-sm text-red-600">Please enter a valid email address</p>
             )}
           </div>
+
           <div>
             <label htmlFor="password" className="block text-base font-medium text-gray-700 mb-2">
               Password
@@ -150,7 +105,8 @@ export default function Signup() {
               required
             />
           </div>
-          <div> {/* Added confirmation field */}
+
+          <div>
             <label htmlFor="confirmPassword" className="block text-base font-medium text-gray-700 mb-2">
               Confirm Password
             </label>
@@ -159,17 +115,16 @@ export default function Signup() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              onBlur={() => setConfirmTouched(true)} // Added blur handler
-              className={`w-full p-3 border ${showPasswordMismatch ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
+              onBlur={() => setConfirmTouched(true)}
+              className={`w-full p-3 border ${showPasswordMismatch ? "border-red-500" : "border-gray-300"} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black`}
               placeholder="••••••••"
               required
             />
-            {showPasswordMismatch && ( // Added conditional error display
-              <p className="mt-2 text-sm text-red-600">
-                Passwords do not match
-              </p>
+            {showPasswordMismatch && (
+              <p className="mt-2 text-sm text-red-600">Passwords do not match</p>
             )}
           </div>
+
           <div>
             <label htmlFor="displayName" className="block text-base font-medium text-gray-700 mb-2">
               Username (Optional)
@@ -183,6 +138,7 @@ export default function Signup() {
               placeholder="Your username"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -191,16 +147,10 @@ export default function Signup() {
             {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
-        {error && (
-          <p className="mt-4 text-center text-sm text-red-600">
-            {error}
-          </p>
-        )}
-        {message && (
-          <p className="mt-4 text-center text-sm text-green-600">
-            {message}
-          </p>
-        )}
+
+        {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
+        {message && <p className="mt-4 text-center text-sm text-green-600">{message}</p>}
+
         <p className="mt-6 text-center text-base text-gray-600">
           Already have an account?{" "}
           <Link href="/signin" className="text-blue-600 hover:underline">

@@ -2,7 +2,7 @@ import "@/app/globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import "@fortawesome/fontawesome-free/css/all.min.css"; // Add this line
+import "@fortawesome/fontawesome-free/css/all.min.css"; 
 
 export const metadata = {
   title: "GambLogic",
