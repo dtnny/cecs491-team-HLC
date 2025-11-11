@@ -48,12 +48,27 @@ export default function TaxReport() {
       ? new Date(formData.date).toISOString()
       : new Date().toISOString();
 
+    // Ensure amount sign matches result: wins are positive, losses are negative
+    let amount = parseFloat(formData.amount);
+    if (isNaN(amount)) {
+      setSubmitMessage("❌ Error: Invalid amount");
+      setSubmitting(false);
+      return;
+    }
+
+    // Make amount negative for losses, positive for wins
+    if (formData.result === "loss") {
+      amount = Math.abs(amount) * -1;
+    } else {
+      amount = Math.abs(amount);
+    }
+
     const { error } = await supabase.from("gambling_logs").insert([
       {
         user_id: user.id,
         ...formData,
         date,
-        amount: parseFloat(formData.amount),
+        amount: amount,
       },
     ]);
 
