@@ -10,10 +10,12 @@ export default function Header() {
   const [points, setPoints] = useState(0);
   const [displayName, setDisplayName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
   const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const pointsSubscriptionRef = useRef(null);
   const profileSubscriptionRef = useRef(null);
 
@@ -236,10 +238,19 @@ export default function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -250,118 +261,281 @@ export default function Header() {
   const hideSignIn = pathname === "/signin" || pathname === "/signup";
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-white p-4 sm:p-6 flex justify-between items-center shadow-lg z-20">
-      <Link href="/" className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-        GambLogic
-      </Link>
-      <div className="relative flex items-center space-x-4" ref={dropdownRef}>
-        {user && (
-          <div className="relative">
-            <div
-              className={[
-                "flex items-center px-4 py-2 rounded-full transition-all duration-300",
-                anim === "up" && "coin-bump bg-green-50 ring-2 ring-green-300",
-                anim === "down" && "coin-shake bg-red-50 ring-2 ring-red-300",
-                !anim && "bg-blue-50 hover:bg-blue-100",
-              ].join(" ")}
-            >
-              <i className="fas fa-star text-yellow-400 text-2xl mr-2"></i>
-              <span className="text-blue-800 font-medium hidden sm:inline">Points: </span>
-              {loading ? (
-                <div className="w-12 h-5 bg-gray-200 rounded animate-pulse"></div>
-              ) : (
+    <>
+      <header className="fixed top-0 left-0 w-full bg-white p-3 sm:p-4 md:p-6 flex justify-between items-center shadow-lg z-20">
+        <Link href="/" className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">
+          GambLogic
+        </Link>
+        
+        <div className="relative flex items-center space-x-2 sm:space-x-4" ref={dropdownRef}>
+          {/* Points display - visible when logged in */}
+          {user && (
+            <div className="relative">
+              <div
+                className={[
+                  "flex items-center px-2 sm:px-4 py-1 sm:py-2 rounded-full transition-all duration-300",
+                  anim === "up" && "coin-bump bg-green-50 ring-2 ring-green-300",
+                  anim === "down" && "coin-shake bg-red-50 ring-2 ring-red-300",
+                  !anim && "bg-blue-50 hover:bg-blue-100",
+                ].join(" ")}
+              >
+                <i className="fas fa-star text-yellow-400 text-lg sm:text-2xl mr-1 sm:mr-2"></i>
+                <span className="text-blue-800 font-medium hidden md:inline">Points: </span>
+                {loading ? (
+                  <div className="w-8 sm:w-12 h-4 sm:h-5 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <span
+                    className={[
+                      "text-gray-900 font-semibold text-sm sm:text-base",
+                      anim === "up" && "text-green-700",
+                      anim === "down" && "text-red-700",
+                    ].join(" ")}
+                  >
+                    {points}
+                  </span>
+                )}
+              </div>
+
+              {/* floating +N / -N */}
+              {anim && delta !== 0 && (
                 <span
                   className={[
-                    "text-gray-900 font-semibold",
-                    anim === "up" && "text-green-700",
-                    anim === "down" && "text-red-700",
+                    "absolute -top-3 right-1 text-xs sm:text-sm font-bold pointer-events-none",
+                    anim === "up" ? "text-green-600 float-up" : "text-red-600 float-down",
                   ].join(" ")}
                 >
-                  {points}
+                  {delta > 0 ? `+${delta}` : `${delta}`}
                 </span>
               )}
             </div>
+          )}
 
-            {/* floating +N / -N */}
-            {anim && delta !== 0 && (
-              <span
-                className={[
-                  "absolute -top-3 right-1 text-sm font-bold pointer-events-none",
-                  anim === "up" ? "text-green-600 float-up" : "text-red-600 float-down",
-                ].join(" ")}
+          {/* Desktop user menu - hidden on mobile */}
+          {user ? (
+            <div className="hidden md:block">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center space-x-2 text-gray-900 font-semibold hover:bg-gray-100 rounded px-3 py-2 transition-all duration-200 focus:outline-none"
               >
-                {delta > 0 ? `+${delta}` : `${delta}`}
-              </span>
-            )}
-          </div>
-        )}
-        {user ? (
-          <div>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center space-x-2 text-gray-900 font-semibold hover:bg-gray-100 rounded px-3 py-2 transition-all duration-200 focus:outline-none"
+                <i className="fas fa-user-circle text-3xl lg:text-4xl text-blue-600"></i>
+                <span className="hidden lg:inline text-base hover:underline">
+                  {displayName || user.email.split("@")[0]}
+                </span>
+              </button>
+              {isOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl z-30 transform transition-all duration-300 ease-out scale-95 origin-top-right opacity-0 animate-[dropdown_0.2s_ease-out_forwards]">
+                  <Link
+                    href="/account"
+                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Account Info
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/tax-report"
+                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Generate Tax Report
+                  </Link>
+                  <Link
+                    href="/diary"
+                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Diary
+                  </Link>
+                  <Link
+                    href="/rewards"
+                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Rewards
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-b-xl"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : !hideSignIn ? (
+            <Link
+              href="/signin"
+              className="hidden md:flex items-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition-all duration-200"
             >
-              <i className="fas fa-user-circle text-4xl text-blue-600"></i>
-              <span className="hidden sm:inline text-base hover:underline">
-                {displayName || user.email.split("@")[0]}
-              </span>
+              <i className="fas fa-lock mr-2"></i>
+              Sign In
+            </Link>
+          ) : null}
+
+          {/* Mobile hamburger menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? (
+              <i className="fas fa-times text-2xl text-gray-700"></i>
+            ) : (
+              <i className="fas fa-bars text-2xl text-gray-700"></i>
+            )}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile slide-out menu */}
+      <div
+        ref={mobileMenuRef}
+        className={`fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Mobile menu header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <span className="text-xl font-bold text-gray-900">Menu</span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <i className="fas fa-times text-xl text-gray-600"></i>
             </button>
-            {isOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl z-30 transform transition-all duration-300 ease-out scale-95 origin-top-right opacity-0 animate-[dropdown_0.2s_ease-out_forwards]">
-                <Link
-                  href="/account"
-                  className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Account Info
-                </Link>
+          </div>
+
+          {/* User info section (if logged in) */}
+          {user && (
+            <div className="p-4 border-b border-gray-200 bg-blue-50">
+              <div className="flex items-center space-x-3">
+                <i className="fas fa-user-circle text-4xl text-blue-600"></i>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {displayName || user.email.split("@")[0]}
+                  </p>
+                  <p className="text-sm text-gray-500 truncate max-w-[180px]">{user.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation links */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            {user ? (
+              <>
                 <Link
                   href="/dashboard"
-                  className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                  onClick={() => setIsOpen(false)}
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
+                  <i className="fas fa-home w-6 mr-3 text-blue-500"></i>
                   Dashboard
                 </Link>
                 <Link
-                  href="/tax-report"
-                  className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Generate Tax Report
-                </Link>
-                <Link
                   href="/diary"
-                  className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                  onClick={() => setIsOpen(false)}
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
+                  <i className="fas fa-book w-6 mr-3 text-blue-500"></i>
                   Diary
                 </Link>
                 <Link
-                  href="/rewards"
-                  className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                  onClick={() => setIsOpen(false)}
+                  href="/tax-report"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
+                  <i className="fas fa-file-alt w-6 mr-3 text-blue-500"></i>
+                  Tax Report
+                </Link>
+                <Link
+                  href="/rewards"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-trophy w-6 mr-3 text-yellow-500"></i>
                   Rewards
                 </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-b-xl"
+                <Link
+                  href="/account"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign Out
-                </button>
-              </div>
+                  <i className="fas fa-user-edit w-6 mr-3 text-blue-500"></i>
+                  Account
+                </Link>
+                <Link
+                  href="/support"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-headset w-6 mr-3 text-blue-500"></i>
+                  Support
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-home w-6 mr-3 text-blue-500"></i>
+                  Home
+                </Link>
+                <Link
+                  href="/support"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-info-circle w-6 mr-3 text-blue-500"></i>
+                  About Us
+                </Link>
+              </>
             )}
+          </nav>
+
+          {/* Bottom section - Sign In/Out */}
+          <div className="p-4 border-t border-gray-200">
+            {user ? (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full flex items-center justify-center bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Sign Out
+              </button>
+            ) : !hideSignIn ? (
+              <Link
+                href="/signin"
+                className="w-full flex items-center justify-center bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <i className="fas fa-lock mr-2"></i>
+                Sign In
+              </Link>
+            ) : null}
           </div>
-        ) : !hideSignIn ? (
-          <Link
-            href="/signin"
-            className="flex items-center bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-blue-700 transition-all duration-200"
-          >
-            <i className="fas fa-lock mr-2"></i>
-            Sign In
-          </Link>
-        ) : null}
+        </div>
       </div>
+
+      {/* Overlay for mobile menu */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       <style jsx>{`
         @keyframes dropdown {
@@ -405,6 +579,6 @@ export default function Header() {
         }
         .float-down { animation: float-down-kf 0.9s ease-in both; }
       `}</style>
-    </header>
+    </>
   );
 }

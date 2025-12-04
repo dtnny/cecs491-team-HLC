@@ -295,11 +295,12 @@ export default function Rewards() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-4 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-100 p-3 sm:p-4 flex flex-col items-center">
       {/* Animated gold badge */}
+      <div className="relative">
         <div
           className={[
-            "mb-8 mt-20 text-gray-800 text-3xl sm:text-4xl font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-full shadow-lg border-2",
+            "mb-4 sm:mb-8 mt-16 sm:mt-20 text-gray-800 text-xl sm:text-3xl md:text-4xl font-bold px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-full shadow-lg border-2",
             anim === "up" ? "bg-green-50 border-green-400 ring-2 ring-green-300 coin-bump" :
             anim === "down" ? "bg-red-50 border-red-400 ring-2 ring-red-300 coin-shake" :
                               "bg-yellow-100 border-yellow-400",
@@ -308,22 +309,23 @@ export default function Rewards() {
             backgroundImage: 'url("/pixel_art_gold_coin.png")',
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
-            backgroundPosition: "left 10px center",
-            paddingLeft: "80px",
-            minWidth: "250px",
-            minHeight: "60px",
+            backgroundPosition: "left 8px center",
+            paddingLeft: "50px",
+            minWidth: "180px",
+            minHeight: "50px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
           <span>Gold: {points}</span>
+        </div>
 
         {/* floating +N / -N */}
         {anim && delta !== 0 && (
           <span
             className={[
-              "absolute -mt-12 ml-40 text-xl font-bold pointer-events-none",
+              "absolute -top-2 right-0 text-base sm:text-xl font-bold pointer-events-none",
               anim === "up" ? "text-green-600 float-up" : "text-red-600 float-down",
             ].join(" ")}
           >
@@ -332,137 +334,224 @@ export default function Rewards() {
         )}
       </div>
 
-      <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-6 sm:mb-8 mt-4">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 sm:mb-6 md:mb-8 mt-2 sm:mt-4 text-center px-2">
         Spin the Slot Reels 🎰
       </h1>
-      <p className="text-gray-600 mb-6 text-base sm:text-lg">Cost per spin: {spinCost} gold</p>
+      <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg">Cost per spin: {spinCost} gold</p>
 
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mb-8 p-4 bg-gray-900 rounded-lg shadow-inner relative">
-        {/* Wheel 1 */}
-        <div className="w-72 h-72 sm:w-80 sm:h-80 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-blue-100 shadow-inner text-center font-bold text-lg sm:text-xl overflow-hidden relative">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-4xl leading-none z-30 pointer-events-none">▼</div>
-          <div
-            className="w-full h-full absolute top-0 left-0"
-            style={{
-              transform: `rotate(${wheel1Rotation}deg)`,
-              transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
-            }}
-          >
-            {wheelOutcomes.map((outcome, idx) => {
-              const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel1);
-              return (
-                <div
-                  key={`w1-o-${idx}`}
-                  className="absolute flex flex-row items-center justify-center"
-                  style={{
-                    top: position.top,
-                    left: position.left,
-                    transform: `translate(-50%, -50%) rotate(-${wheel1Rotation}deg)`,
-                    width: "85px",
-                    height: "50px",
-                    textAlign: "center",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                    border: "2px solid #4A5568",
-                    borderRadius: "6px",
-                    backgroundColor: "rgba(255, 255, 255, 0.3)",
-                    padding: "2px",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 sm:w-10 sm:h-10 object-contain mr-1 flex-shrink-0" />
-                  <span className="text-gray-800 text-xs sm:text-sm font-bold leading-tight">{outcome.label}</span>
-                </div>
-              );
-            })}
+      {/* Wheels container - horizontal scroll on mobile, flex on larger screens */}
+      <div className="w-full max-w-full overflow-x-auto pb-4 lg:overflow-x-visible scrollbar-hide">
+        <div className="flex flex-row justify-start lg:justify-center items-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-8 p-3 sm:p-4 bg-gray-900 rounded-lg shadow-inner min-w-max lg:min-w-0 mx-auto">
+          {/* Wheel 1 */}
+          <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-blue-100 shadow-inner text-center font-bold text-sm sm:text-lg md:text-xl overflow-hidden relative flex-shrink-0">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-2xl sm:text-3xl md:text-4xl leading-none z-30 pointer-events-none">▼</div>
+            <div
+              className="w-full h-full absolute top-0 left-0"
+              style={{
+                transform: `rotate(${wheel1Rotation}deg)`,
+                transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
+              }}
+            >
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, 192); // Mobile size
+                return (
+                  <div
+                    key={`w1-o-${idx}`}
+                    className="absolute flex flex-row items-center justify-center sm:hidden"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel1Rotation}deg)`,
+                      width: "60px",
+                      height: "36px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "1px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-5 h-5 object-contain mr-0.5 flex-shrink-0" />
+                    <span className="text-gray-800 text-[9px] font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel1);
+                return (
+                  <div
+                    key={`w1-o-lg-${idx}`}
+                    className="absolute flex-row items-center justify-center hidden sm:flex"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel1Rotation}deg)`,
+                      width: "85px",
+                      height: "50px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "2px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 md:w-10 md:h-10 object-contain mr-1 flex-shrink-0" />
+                    <span className="text-gray-800 text-xs md:text-sm font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Wheel 2 */}
-        <div className="w-80 h-80 sm:w-96 sm:h-96 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-green-100 shadow-inner text-center font-bold text-xl sm:text-2xl overflow-hidden relative">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-4xl leading-none z-30 pointer-events-none">▼</div>
-          <div
-            className="w-full h-full absolute top-0 left-0"
-            style={{
-              transform: `rotate(${wheel2Rotation}deg)`,
-              transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
-            }}
-          >
-            {wheelOutcomes.map((outcome, idx) => {
-              const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel2);
-              return (
-                <div
-                  key={`w2-o-${idx}`}
-                  className="absolute flex flex-row items-center justify-center"
-                  style={{
-                    top: position.top,
-                    left: position.left,
-                    transform: `translate(-50%, -50%) rotate(-${wheel2Rotation}deg)`,
-                    width: "85px",
-                    height: "50px",
-                    textAlign: "center",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                    border: "2px solid #4A5568",
-                    borderRadius: "6px",
-                    backgroundColor: "rgba(255, 255, 255, 0.3)",
-                    padding: "2px",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 sm:w-10 sm:h-10 object-contain mr-1 flex-shrink-0" />
-                  <span className="text-gray-800 text-xs sm:text-sm font-bold leading-tight">{outcome.label}</span>
-                </div>
-              );
-            })}
+          {/* Wheel 2 */}
+          <div className="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-green-100 shadow-inner text-center font-bold text-base sm:text-xl md:text-2xl overflow-hidden relative flex-shrink-0">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-2xl sm:text-3xl md:text-4xl leading-none z-30 pointer-events-none">▼</div>
+            <div
+              className="w-full h-full absolute top-0 left-0"
+              style={{
+                transform: `rotate(${wheel2Rotation}deg)`,
+                transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
+              }}
+            >
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, 224); // Mobile size
+                return (
+                  <div
+                    key={`w2-o-${idx}`}
+                    className="absolute flex flex-row items-center justify-center sm:hidden"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel2Rotation}deg)`,
+                      width: "65px",
+                      height: "40px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "1px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-6 h-6 object-contain mr-0.5 flex-shrink-0" />
+                    <span className="text-gray-800 text-[10px] font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel2);
+                return (
+                  <div
+                    key={`w2-o-lg-${idx}`}
+                    className="absolute flex-row items-center justify-center hidden sm:flex"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel2Rotation}deg)`,
+                      width: "85px",
+                      height: "50px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "2px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 md:w-10 md:h-10 object-contain mr-1 flex-shrink-0" />
+                    <span className="text-gray-800 text-xs md:text-sm font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Wheel 3 */}
-        <div className="w-72 h-72 sm:w-80 sm:h-80 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-purple-100 shadow-inner text-center font-bold text-lg sm:text-xl overflow-hidden relative">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-4xl leading-none z-30 pointer-events-none">▼</div>
-          <div
-            className="w-full h-full absolute top-0 left-0"
-            style={{
-              transform: `rotate(${wheel3Rotation}deg)`,
-              transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
-            }}
-          >
-            {wheelOutcomes.map((outcome, idx) => {
-              const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel3);
-              return (
-                <div
-                  key={`w3-o-${idx}`}
-                  className="absolute flex flex-row items-center justify-center"
-                  style={{
-                    top: position.top,
-                    left: position.left,
-                    transform: `translate(-50%, -50%) rotate(-${wheel3Rotation}deg)`,
-                    width: "85px",
-                    height: "50px",
-                    textAlign: "center",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                    border: "2px solid #4A5568",
-                    borderRadius: "6px",
-                    backgroundColor: "rgba(255, 255, 255, 0.3)",
-                    padding: "2px",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 sm:w-10 sm:h-10 object-contain mr-1 flex-shrink-0" />
-                  <span className="text-gray-800 text-xs sm:text-sm font-bold leading-tight">{outcome.label}</span>
-                </div>
-              );
-            })}
+          {/* Wheel 3 */}
+          <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-purple-100 shadow-inner text-center font-bold text-sm sm:text-lg md:text-xl overflow-hidden relative flex-shrink-0">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-2xl sm:text-3xl md:text-4xl leading-none z-30 pointer-events-none">▼</div>
+            <div
+              className="w-full h-full absolute top-0 left-0"
+              style={{
+                transform: `rotate(${wheel3Rotation}deg)`,
+                transition: "transform 4000ms cubic-bezier(0.33, 1, 0.68, 1)",
+              }}
+            >
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, 192); // Mobile size
+                return (
+                  <div
+                    key={`w3-o-${idx}`}
+                    className="absolute flex flex-row items-center justify-center sm:hidden"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel3Rotation}deg)`,
+                      width: "60px",
+                      height: "36px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "1px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-5 h-5 object-contain mr-0.5 flex-shrink-0" />
+                    <span className="text-gray-800 text-[9px] font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+              {wheelOutcomes.map((outcome, idx) => {
+                const position = calculatePosition(outcome.targetDegree, WHEEL_DIAMETERS.wheel3);
+                return (
+                  <div
+                    key={`w3-o-lg-${idx}`}
+                    className="absolute flex-row items-center justify-center hidden sm:flex"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                      transform: `translate(-50%, -50%) rotate(-${wheel3Rotation}deg)`,
+                      width: "85px",
+                      height: "50px",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                      border: "2px solid #4A5568",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.3)",
+                      padding: "2px",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <img src="/pixel_art_gold_coin.png" alt="Coin" className="w-8 h-8 md:w-10 md:h-10 object-contain mr-1 flex-shrink-0" />
+                    <span className="text-gray-800 text-xs md:text-sm font-bold leading-tight">{outcome.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
+      
+      {/* Scroll hint for mobile */}
+      <p className="text-gray-500 text-xs mb-4 lg:hidden">← Swipe to see all wheels →</p>
 
       <button
         onClick={spinWheel}
         disabled={isSpinning || loading || points < spinCost}
-        className={`py-3 px-6 rounded-full font-semibold transition transform hover:scale-105 shadow-md text-base sm:text-lg
+        className={`py-2 sm:py-3 px-4 sm:px-6 rounded-full font-semibold transition transform hover:scale-105 shadow-md text-sm sm:text-base md:text-lg
           ${isSpinning || loading || points < spinCost
             ? "bg-gray-400 text-gray-700 cursor-not-allowed opacity-50"
             : "bg-blue-600 text-white hover:bg-blue-700"
@@ -473,7 +562,7 @@ export default function Rewards() {
 
       {result && (
         <div
-          className={`mt-6 text-xl sm:text-3xl font-bold p-3 sm:p-4 rounded-lg shadow-md text-center transition-all duration-300 ${
+          className={`mt-4 sm:mt-6 text-base sm:text-xl md:text-3xl font-bold p-2 sm:p-3 md:p-4 rounded-lg shadow-md text-center transition-all duration-300 mx-2 ${
             result.includes("JACKPOT") || (result.includes("Won:") && !result.includes("-") && !result.includes("0 gold"))
               ? "bg-yellow-200 text-yellow-800 border-4 border-yellow-500"
               : result.includes("enough gold") || result.includes("-")
@@ -485,16 +574,16 @@ export default function Rewards() {
         </div>
       )}
 
-      <h2 className="mt-12 sm:mt-16 mb-6 text-2xl sm:text-3xl font-extrabold text-gray-900 text-center border-b-2 border-purple-500 pb-2">
+      <h2 className="mt-8 sm:mt-12 md:mt-16 mb-4 sm:mb-6 text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 text-center border-b-2 border-purple-500 pb-2 px-2">
         Rewards Shop 🛍️
       </h2>
-      <p className="text-gray-600 mb-8 text-base sm:text-lg text-center">
+      <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg text-center px-2">
         Use your gold to claim awards here! (Claimable multiple times)
       </p>
 
       {shopMessage && (
         <div
-          className={`mb-6 p-3 rounded-md text-center font-semibold text-base sm:text-lg transition-all duration-300 ${
+          className={`mb-4 sm:mb-6 p-2 sm:p-3 rounded-md text-center font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 mx-2 ${
             shopMessage.includes("Successfully")
               ? "bg-green-200 text-green-800"
               : shopMessage.includes("enough")
@@ -506,15 +595,15 @@ export default function Rewards() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-5xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 w-full max-w-5xl px-2">
         {shopRewards.map((reward) => (
           <div
             key={reward.id}
-            className="border border-gray-200 rounded-xl p-5 sm:p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
+            className="border border-gray-200 rounded-xl p-4 sm:p-5 md:p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
           >
             <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">{reward.name}</h3>
-              <p className="text-purple-700 mb-4 text-base sm:text-xl font-bold">Cost: {reward.cost} gold</p>
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">{reward.name}</h3>
+              <p className="text-purple-700 mb-3 sm:mb-4 text-sm sm:text-base md:text-xl font-bold">Cost: {reward.cost} gold</p>
             </div>
             <button
               onClick={() => claimShopReward(reward)}
@@ -524,7 +613,7 @@ export default function Rewards() {
                 claimingStatus[reward.id] === "claiming" ||
                 claimingStatus[reward.id] === "claimed"
               }
-              className={`py-2 sm:py-3 px-4 sm:px-6 rounded-full font-semibold transition-all duration-200 transform hover:scale-105 shadow-md text-sm sm:text-base
+              className={`py-2 sm:py-3 px-3 sm:px-4 md:px-6 rounded-full font-semibold transition-all duration-200 transform hover:scale-105 shadow-md text-xs sm:text-sm md:text-base
                 ${
                   claimingStatus[reward.id] === "claimed"
                     ? "bg-green-500 text-white cursor-not-allowed"
@@ -545,7 +634,7 @@ export default function Rewards() {
         ))}
       </div>
 
-      <div className="mt-12 text-gray-600 text-sm text-center">
+      <div className="mt-8 sm:mt-12 text-gray-600 text-xs sm:text-sm text-center pb-4">
         {user ? `User ID: ${user.id}` : "Not logged in"}
       </div>
 
