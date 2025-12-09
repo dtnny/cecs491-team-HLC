@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 import { generateTaxReportPDF } from "@/utils/generateTaxReportPDF";
 
 export default function TaxReport() {
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading, setReconnecting } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [entries, setEntries] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -14,6 +15,7 @@ export default function TaxReport() {
   const [submitMessage, setSubmitMessage] = useState("");
   const [generateMessage, setGenerateMessage] = useState("");
   const [page, setPage] = useState(1);
+  const [pageReady, setPageReady] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -27,54 +29,107 @@ export default function TaxReport() {
 
   const ENTRIES_PER_PAGE = 6;
 
+  // Helper function to refresh page on network/timeout errors
+  const handleErrorAndRefresh = (error) => {
+    console.error("Error detected, refreshing page:", error);
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes("timeout") || errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      console.log("Refreshing the page!");
+      setReconnecting(true);
+      // Show message for 1.5 seconds before refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/signin");
-      } else {
-        setUser(user);
+    if (!authLoading && !user) {
+      router.push("/signin");
+    }
+  }, [authLoading, user, router]);
+
+  // Check page readiness and connection
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const checkConnection = async () => {
+      try {
+        // Quick connection test
+        const testPromise = supabase.from("gambling_logs").select("id").limit(1);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Connection timeout")), 3000)
+        );
+
+        await Promise.race([testPromise, timeoutPromise]);
+        setPageReady(true);
+      } catch (error) {
+        console.error("Connection check failed:", error);
+        setReconnecting(true);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
     };
-    fetchUser();
-  }, [router]);
+
+    checkConnection();
+  }, [authLoading, user, setReconnecting]);
 
   const handleSubmitLog = async (e) => {
     e.preventDefault();
-    setSubmitMessage("");
-    setSubmitting(true);
-
-    const date = formData.date
-      ? new Date(formData.date).toISOString()
-      : new Date().toISOString();
-
-    // Ensure amount sign matches result: wins are positive, losses are negative
-    let amount = parseFloat(formData.amount);
-    if (isNaN(amount)) {
-      setSubmitMessage("❌ Error: Invalid amount");
-      setSubmitting(false);
+    
+    if (!user) {
+      setSubmitMessage("❌ Error: User not authenticated. Please sign in again.");
+      router.push("/signin");
       return;
     }
 
-    // Make amount negative for losses, positive for wins
-    if (formData.result === "loss") {
-      amount = Math.abs(amount) * -1;
-    } else {
-      amount = Math.abs(amount);
-    }
+    setSubmitMessage("");
+    setSubmitting(true);
 
-    const { error } = await supabase.from("gambling_logs").insert([
-      {
-        user_id: user.id,
-        ...formData,
-        date,
-        amount: amount,
-      },
-    ]);
+    try {
+      const date = formData.date
+        ? new Date(formData.date).toISOString()
+        : new Date().toISOString();
 
-    if (error) {
-      setSubmitMessage("❌ Error: " + error.message);
-    } else {
+      // Ensure amount sign matches result: wins are positive, losses are negative
+      let amount = parseFloat(formData.amount);
+      if (isNaN(amount)) {
+        setSubmitMessage("❌ Error: Invalid amount");
+        setSubmitting(false);
+        return;
+      }
+
+      // Make amount negative for losses, positive for wins
+      if (formData.result === "loss") {
+        amount = Math.abs(amount) * -1;
+      } else {
+        amount = Math.abs(amount);
+      }
+
+      // Add timeout to prevent hanging
+      const insertPromise = supabase.from("gambling_logs").insert([
+        {
+          user_id: user.id,
+          ...formData,
+          date,
+          amount: amount,
+        },
+      ]);
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Please try again.")), 5000)
+      );
+
+      const { error } = await Promise.race([insertPromise, timeoutPromise]);
+
+      if (error) {
+        handleErrorAndRefresh(error);
+        setSubmitMessage("❌ Error: " + error.message);
+        setSubmitting(false);
+        return;
+      }
+
       setSubmitMessage("✅ Entry submitted successfully!");
       setFormData({
         date: "",
@@ -88,18 +143,27 @@ export default function TaxReport() {
       // Add 50 points to user_points
       let pointsMessage = "";
       try {
-        const { data: pointsData, error: fetchError } = await supabase
+        const pointsFetchPromise = supabase
           .from("user_points")
           .select("points")
           .eq("user_id", user.id)
           .single();
+
+        const pointsTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Points fetch timeout")), 5000)
+        );
+
+        const { data: pointsData, error: fetchError } = await Promise.race([
+          pointsFetchPromise,
+          pointsTimeoutPromise,
+        ]);
 
         if (fetchError) throw new Error("Failed to fetch points: " + fetchError.message);
 
         const currentPoints = pointsData?.points || 0;
         const newPoints = currentPoints + 50;
 
-        const { error: updateError } = await supabase
+        const updatePromise = supabase
           .from("user_points")
           .upsert([
             {
@@ -109,6 +173,15 @@ export default function TaxReport() {
             },
           ]);
 
+        const updateTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Points update timeout")), 5000)
+        );
+
+        const { error: updateError } = await Promise.race([
+          updatePromise,
+          updateTimeoutPromise,
+        ]);
+
         if (updateError) throw new Error("Failed to update points: " + updateError.message);
 
         pointsMessage = " You earned 50 points! 🎉";
@@ -117,8 +190,12 @@ export default function TaxReport() {
       }
 
       setSubmitMessage("✅ Entry submitted successfully!" + pointsMessage);
+    } catch (error) {
+      console.error("Submit error:", error);
+      handleErrorAndRefresh(error);
+      setSubmitMessage("❌ Error: " + (error.message || "Failed to submit entry. Please try again."));
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const convertBlobToBase64 = (blob) =>
@@ -131,41 +208,78 @@ export default function TaxReport() {
 
   const handleGenerate = async (e) => {
     e.preventDefault();
+    
+    if (!user) {
+      setGenerateMessage("❌ Error: User not authenticated. Please sign in again.");
+      router.push("/signin");
+      return;
+    }
+
     setGenerateMessage("");
     setGenerating(true);
 
-    const from = `${year}-01-01T00:00:00`;
-    const to = `${year}-12-31T23:59:59`;
+    try {
+      const from = `${year}-01-01T00:00:00`;
+      const to = `${year}-12-31T23:59:59`;
 
-    const { data, error } = await supabase
-      .from("gambling_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("date", from)
-      .lte("date", to)
-      .order("date", { ascending: true });
+      const fetchPromise = supabase
+        .from("gambling_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", from)
+        .lte("date", to)
+        .order("date", { ascending: true });
 
-    if (error) {
-      setGenerateMessage("❌ Error fetching entries: " + error.message);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Please try again.")), 5000)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (error) {
+        handleErrorAndRefresh(error);
+        setGenerateMessage("❌ Error fetching entries: " + error.message);
+        setGenerating(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setGenerateMessage("No entries found for this year.");
+        setGenerating(false);
+        return;
+      }
+
+      setEntries(data);
+
+      const res = await fetch("/company_logo.png");
+      if (!res.ok) {
+        throw new Error("Failed to fetch logo");
+      }
+      const blob = await res.blob();
+      const base64Logo = await convertBlobToBase64(blob);
+
+      generateTaxReportPDF(data, year, base64Logo);
+    } catch (error) {
+      console.error("Generate error:", error);
+      handleErrorAndRefresh(error);
+      setGenerateMessage("❌ Error: " + (error.message || "Failed to generate report. Please try again."));
       setGenerating(false);
-      return;
     }
-
-    if (!data || data.length === 0) {
-      setGenerateMessage("No entries found for this year.");
-      setGenerating(false);
-      return;
-    }
-
-    setEntries(data);
-
-    const res = await fetch("/company_logo.png");
-    const blob = await res.blob();
-    const base64Logo = await convertBlobToBase64(blob);
-
-    generateTaxReportPDF(data, year, base64Logo);
-    setGenerating(false);
   };
+
+  if (authLoading || !pageReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-xl">Loading Diary...</p>
+          {!authLoading && !pageReady && (
+            <p className="text-sm text-gray-500 mt-2">Checking connection...</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return null;
 

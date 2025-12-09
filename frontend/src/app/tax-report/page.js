@@ -1,18 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 import { generateTaxReportPDF } from "@/utils/generateTaxReportPDF";
+import SplitTextAnimated from "@/components/SplitText";
 
 export default function TaxReport() {
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading, setReconnecting } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear().toString());
-  const [loadingUser, setLoadingUser] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [entries, setEntries] = useState([]);
   const [message, setMessage] = useState("Please select a tax year and click \"Generate Report\" to view entries.");
   const [page, setPage] = useState(1);
+  const [pageReady, setPageReady] = useState(false);
   const router = useRouter();
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -20,19 +22,51 @@ export default function TaxReport() {
 
   const ENTRIES_PER_PAGE = 6;
 
+  // Helper function to refresh page on network/timeout errors
+  const handleErrorAndRefresh = (error) => {
+    console.error("Error detected, refreshing page:", error);
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes("timeout") || errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      console.log("Refreshing the page!");
+      setReconnecting(true);
+      // Show message for 1.5 seconds before refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      setLoadingUser(true);
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
-        router.push("/signin");
-        return;
+    if (!authLoading && !user) {
+      router.push("/signin");
+    }
+  }, [authLoading, user, router]);
+
+  // Check page readiness and connection
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const checkConnection = async () => {
+      try {
+        // Quick connection test
+        const testPromise = supabase.from("gambling_logs").select("id").limit(1);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Connection timeout")), 3000)
+        );
+
+        await Promise.race([testPromise, timeoutPromise]);
+        setPageReady(true);
+      } catch (error) {
+        console.error("Connection check failed:", error);
+        setReconnecting(true);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
-      setUser(currentUser);
-      setLoadingUser(false);
     };
-    fetchUser();
-  }, [router]);
+
+    checkConnection();
+  }, [authLoading, user, setReconnecting]);
 
   const generateReportForUser = async (selectedYear, activeUser) => {
     if (!activeUser) {
@@ -46,25 +80,39 @@ export default function TaxReport() {
     setEntries([]);
     setPage(1);
 
-    const { data, error } = await supabase
-      .from("gambling_logs")
-      .select("*")
-      .eq("user_id", activeUser.id)
-      .gte("date", `${selectedYear}-01-01`)
-      .lte("date", `${selectedYear}-12-31`)
-      .order("date", { ascending: true });
+    try {
+      const fetchPromise = supabase
+        .from("gambling_logs")
+        .select("*")
+        .eq("user_id", activeUser.id)
+        .gte("date", `${selectedYear}-01-01`)
+        .lte("date", `${selectedYear}-12-31`)
+        .order("date", { ascending: true });
 
-    if (error) {
-      setMessage("❌ Error fetching entries: " + error.message);
-    } else {
-      setEntries(data || []);
-      if (!data || data.length === 0) {
-        setMessage("ℹ️ No entries found for the selected year.");
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Please try again.")), 5000)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (error) {
+        handleErrorAndRefresh(error);
+        setMessage("❌ Error fetching entries: " + error.message);
       } else {
-        setMessage("");
+        setEntries(data || []);
+        if (!data || data.length === 0) {
+          setMessage("ℹ️ No entries found for the selected year.");
+        } else {
+          setMessage("");
+        }
       }
+    } catch (error) {
+      console.error("Generate report error:", error);
+      handleErrorAndRefresh(error);
+      setMessage("❌ Error: " + (error.message || "Failed to generate report. Please try again."));
+    } finally {
+      setGeneratingReport(false);
     }
-    setGeneratingReport(false);
   };
 
   const handleGenerateSubmit = async (e) => {
@@ -106,15 +154,21 @@ export default function TaxReport() {
     }
   };
 
-  if (loadingUser) {
+  if (authLoading || !pageReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-xl text-gray-700">Loading user data...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-700">Loading Tax Report...</p>
+          {!authLoading && !pageReady && (
+            <p className="text-sm text-gray-500 mt-2">Checking connection...</p>
+          )}
+        </div>
       </div>
     );
   }
 
-  if (!user && !loadingUser) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-xl text-gray-700">Redirecting to sign in...</p>
@@ -128,9 +182,18 @@ export default function TaxReport() {
   return (
     <div className="min-h-screen bg-gray-50 pt-12 sm:pt-20 px-4 sm:px-6 lg:px-8 text-black">
       <section className="py-10 sm:py-12 container mx-auto max-w-4xl bg-white rounded-2xl shadow-xl text-black">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-center text-gray-900 mb-6 sm:mb-8">
-          Gambling Entry Log
-        </h1>
+        <div className="mb-6 sm:mb-8 text-center">
+          <SplitTextAnimated
+            text="Gambling Entry Log"
+            tag="h1"
+            className="text-3xl sm:text-4xl font-extrabold text-gray-900"
+            splitType="chars"
+            delay={30}
+            duration={0.4}
+            from={{ opacity: 0, y: 20 }}
+            to={{ opacity: 1, y: 0 }}
+          />
+        </div>
 
         {/* Form for selecting year and generating report */}
         <form onSubmit={handleGenerateSubmit} className="px-6 sm:px-8 mb-8 sm:mb-10">
@@ -159,7 +222,7 @@ export default function TaxReport() {
             </div>
             <button
               type="submit"
-              disabled={generatingReport || loadingUser}
+              disabled={generatingReport || authLoading}
               // Added whitespace-nowrap to prevent button text from wrapping on smaller screens
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed whitespace-nowrap"
             >

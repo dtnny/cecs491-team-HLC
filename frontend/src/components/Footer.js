@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 
 export default function Footer() {
   const [appVersion, setAppVersion] = useState('1.0.0');

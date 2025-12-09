@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { supabaseServer as supabase } from "@/lib/supabase-server";
 
 export async function POST(request) {
   try {

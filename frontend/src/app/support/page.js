@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
 
 const Section = ({ title, children }) => (
   <section className="mb-12">
@@ -11,15 +11,7 @@ const Section = ({ title, children }) => (
 );
 
 export default function AboutUs() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, []);
+  const { user } = useAuth();
 
   const team = [
     { name: "Daniel", role: "Developer" },

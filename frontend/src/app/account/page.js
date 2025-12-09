@@ -1,80 +1,158 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import SplitTextAnimated from "@/components/SplitText";
 
 export default function Account() {
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading, setReconnecting } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  // Helper function to refresh page on network/timeout errors
+  const handleErrorAndRefresh = (error) => {
+    console.error("Error detected, refreshing page:", error);
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes("timeout") || errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      console.log("Refreshing the page!");
+      setReconnecting(true);
+      // Show message for 1.5 seconds before refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/signin");
-      } else {
-        setUser(user);
-        const { data, error } = await supabase
+    if (!authLoading && !user) {
+      router.push("/signin");
+    }
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const fetchProfile = async () => {
+      setLoadingProfile(true);
+      try {
+        const fetchPromise = supabase
           .from("user_profiles")
           .select("display_name, email_notifications")
           .eq("user_id", user.id)
           .single();
 
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), 5000)
+        );
+
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
         if (error && error.code !== "PGRST116") {
           console.error("Error fetching profile:", error);
+          handleErrorAndRefresh(error);
         } else {
           setDisplayName(data?.display_name || "");
           setEmailNotifications(data?.email_notifications ?? true);
         }
+      } catch (error) {
+        console.error("Profile fetch error:", error);
+        handleErrorAndRefresh(error);
+        // Set defaults on error
+        setDisplayName("");
+        setEmailNotifications(true);
+      } finally {
+        setLoadingProfile(false);
       }
-      setLoading(false);
     };
-    fetchUser();
-  }, [router]);
+
+    fetchProfile();
+  }, [authLoading, user]);
 
   const handleSave = async (e) => {
     e.preventDefault();
+    
+    if (!user) {
+      setMessage("Error: User not authenticated. Please sign in again.");
+      router.push("/signin");
+      return;
+    }
+
     setMessage("");
     setLoading(true);
 
-    const { error } = await supabase
-      .from("user_profiles")
-      .upsert(
-        {
-          user_id: user.id,
-          display_name: displayName || null,
-          email_notifications: emailNotifications,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
+    try {
+      const updatePromise = supabase
+        .from("user_profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            display_name: displayName || null,
+            email_notifications: emailNotifications,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Please try again.")), 5000)
       );
 
-    setLoading(false);
-    if (error) {
-      setMessage("Error updating profile: " + error.message);
-    } else {
-      setMessage("Profile updated successfully!");
+      const { error } = await Promise.race([updatePromise, timeoutPromise]);
+
+      if (error) {
+        handleErrorAndRefresh(error);
+        setMessage("Error updating profile: " + error.message);
+      } else {
+        setMessage("Profile updated successfully!");
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      handleErrorAndRefresh(error);
+      setMessage("Error: " + (error.message || "Failed to update profile. Please try again."));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePasswordReset = async () => {
+    if (!user) {
+      setMessage("Error: User not authenticated. Please sign in again.");
+      router.push("/signin");
+      return;
+    }
+
     setMessage("");
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    try {
+      const resetPromise = supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-    setLoading(false);
-    if (error) {
-      setMessage("Error sending reset email: " + error.message);
-    } else {
-      setMessage("Password reset email sent! Check your inbox and follow the link to reset your password.");
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout. Please try again.")), 5000)
+      );
+
+      const { error } = await Promise.race([resetPromise, timeoutPromise]);
+
+      if (error) {
+        handleErrorAndRefresh(error);
+        setMessage("Error sending reset email: " + error.message);
+      } else {
+        setMessage("Password reset email sent! Check your inbox and follow the link to reset your password.");
+      }
+    } catch (error) {
+      console.error("Password reset error:", error);
+      handleErrorAndRefresh(error);
+      setMessage("Error: " + (error.message || "Failed to send reset email. Please try again."));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,14 +197,34 @@ export default function Account() {
     }
   };
 
+  if (authLoading || loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-700 text-xl">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 px-4 sm:px-6 lg:px-8">
       <section className="py-12 sm:py-16 container mx-auto max-w-2xl bg-white rounded-2xl shadow-xl">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-8 text-center">
-          Edit Your Profile
-        </h1>
+        <div className="mb-8 text-center">
+          <SplitTextAnimated
+            text="Edit Your Profile"
+            tag="h1"
+            className="text-3xl sm:text-4xl font-extrabold text-gray-900"
+            splitType="chars"
+            delay={30}
+            duration={0.4}
+            from={{ opacity: 0, y: 20 }}
+            to={{ opacity: 1, y: 0 }}
+          />
+        </div>
         <form onSubmit={handleSave} className="px-6 sm:px-8 space-y-6">
           <div>
             <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">

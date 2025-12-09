@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function Header() {
+  const { reconnecting } = useAuth();
   const [user, setUser] = useState(null);
   const [points, setPoints] = useState(0);
   const [displayName, setDisplayName] = useState("");
@@ -326,36 +328,51 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl z-30 transform transition-all duration-300 ease-out scale-95 origin-top-right opacity-0 animate-[dropdown_0.2s_ease-out_forwards]">
                   <Link
                     href="/account"
-                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl"
-                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-t-xl ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={(e) => {
+                      if (reconnecting) e.preventDefault();
+                      setIsOpen(false);
+                    }}
                   >
                     Account Info
                   </Link>
                   <Link
                     href="/dashboard"
-                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={(e) => {
+                      if (reconnecting) e.preventDefault();
+                      setIsOpen(false);
+                    }}
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/tax-report"
-                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={(e) => {
+                      if (reconnecting) e.preventDefault();
+                      setIsOpen(false);
+                    }}
                   >
                     Generate Tax Report
                   </Link>
                   <Link
                     href="/diary"
-                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={(e) => {
+                      if (reconnecting) e.preventDefault();
+                      setIsOpen(false);
+                    }}
                   >
                     Diary
                   </Link>
                   <Link
                     href="/rewards"
-                    className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                    onClick={() => setIsOpen(false)}
+                    className={`block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={(e) => {
+                      if (reconnecting) e.preventDefault();
+                      setIsOpen(false);
+                    }}
                   >
                     Rewards
                   </Link>
@@ -433,48 +450,66 @@ export default function Header() {
               <>
                 <Link
                   href="/dashboard"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-home w-6 mr-3 text-blue-500"></i>
                   Dashboard
                 </Link>
                 <Link
                   href="/diary"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-book w-6 mr-3 text-blue-500"></i>
                   Diary
                 </Link>
                 <Link
                   href="/tax-report"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-file-alt w-6 mr-3 text-blue-500"></i>
                   Tax Report
                 </Link>
                 <Link
                   href="/rewards"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-trophy w-6 mr-3 text-yellow-500"></i>
                   Rewards
                 </Link>
                 <Link
                   href="/account"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-user-edit w-6 mr-3 text-blue-500"></i>
                   Account
                 </Link>
                 <Link
                   href="/support"
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${reconnecting ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={(e) => {
+                    if (reconnecting) e.preventDefault();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <i className="fas fa-headset w-6 mr-3 text-blue-500"></i>
                   Support

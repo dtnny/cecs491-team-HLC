@@ -2,11 +2,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser as supabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import SplitTextAnimated from "@/components/SplitText";
 
 export default function Rewards() {
-  const [user, setUser] = useState(null);
+  const { user, loading: authLoading, setReconnecting } = useAuth();
   const [points, setPoints] = useState(0);
 
   // --- animation state for coin count ---
@@ -23,10 +25,24 @@ export default function Rewards() {
   const [wheel2Rotation, setWheel2Rotation] = useState(0);
   const [wheel3Rotation, setWheel3Rotation] = useState(0);
 
-  const [loading, setLoading] = useState(true);
+  const [loadingPoints, setLoadingPoints] = useState(true);
   const router = useRouter();
 
   const spinCost = 300;
+
+  // Helper function to refresh page on network/timeout errors
+  const handleErrorAndRefresh = (error) => {
+    console.error("Error detected, refreshing page:", error);
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes("timeout") || errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      console.log("Refreshing the page!");
+      setReconnecting(true);
+      // Show message for 1.5 seconds before refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    }
+  };
 
   // 7 equally spaced outcomes around the circle (pointer is at the top)
   // 360 / 7 ≈ 51.428571. We'll use exact math so pointer lines up precisely.
@@ -53,58 +69,74 @@ export default function Rewards() {
     return outcomes[outcomes.length - 1];
   };
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/signin");
+    }
+  }, [authLoading, user, router]);
+
   // Optional: realtime subscription to user_points for multi-tab consistency
   useEffect(() => {
+    if (authLoading || !user) return;
+
     let channel = null;
 
-    const fetchUserAndPoints = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/signin");
-        return;
-      }
-      setUser(user);
+    const fetchPoints = async () => {
+      setLoadingPoints(true);
+      try {
+        const fetchPromise = supabase
+          .from("user_points")
+          .select("points")
+          .eq("user_id", user.id)
+          .single();
 
-      const { data: row, error } = await supabase
-        .from("user_points")
-        .select("points")
-        .eq("user_id", user.id)
-        .single();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), 5000)
+        );
 
-      if (error && error.code !== "PGRST116") {
-        console.error("Error fetching points in Rewards:", error);
+        const { data: row, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching points in Rewards:", error);
+          handleErrorAndRefresh(error);
+          setPoints(0);
+        } else {
+          setPoints(row?.points ?? 0);
+        }
+
+        // realtime subscribe
+        channel = supabase
+          .channel(`rewards_points_${user.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "user_points",
+              filter: `user_id=eq.${user.id}`,
+            },
+            (payload) => {
+              if (payload.new?.points !== undefined) setPoints(payload.new.points);
+              else if (payload.eventType === "DELETE") setPoints(0);
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        console.error("Points fetch error:", error);
+        handleErrorAndRefresh(error);
         setPoints(0);
-      } else {
-        setPoints(row?.points ?? 0);
+      } finally {
+        setLoadingPoints(false);
       }
-
-      // realtime subscribe
-      channel = supabase
-        .channel(`rewards_points_${user.id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "user_points",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            if (payload.new?.points !== undefined) setPoints(payload.new.points);
-            else if (payload.eventType === "DELETE") setPoints(0);
-          }
-        )
-        .subscribe();
-      setLoading(false);
     };
 
-    fetchUserAndPoints();
+    fetchPoints();
 
     return () => {
       if (channel) supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [authLoading, user]);
 
   // --- animate coin count whenever points change ---
   useEffect(() => {
@@ -165,14 +197,30 @@ export default function Rewards() {
 
     // Deduct cost immediately
     const pointsAfterDeduction = points - spinCost;
-    const { error: deductionError } = await supabase
-      .from("user_points")
-      .update({ points: pointsAfterDeduction, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+    try {
+      const updatePromise = supabase
+        .from("user_points")
+        .update({ points: pointsAfterDeduction, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id);
 
-    if (deductionError) {
-      console.error("Error deducting points in spinWheel:", deductionError);
-      setResult("Failed to spin: " + deductionError.message);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 5000)
+      );
+
+      const { error: deductionError } = await Promise.race([updatePromise, timeoutPromise]);
+
+      if (deductionError) {
+        console.error("Error deducting points in spinWheel:", deductionError);
+        handleErrorAndRefresh(deductionError);
+        setResult("Failed to spin: " + deductionError.message);
+        setTimeout(() => setResult(null), 3000);
+        setIsSpinning(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Spin deduction error:", error);
+      handleErrorAndRefresh(error);
+      setResult("Failed to spin: " + (error.message || "Network error. Please try again."));
       setTimeout(() => setResult(null), 3000);
       setIsSpinning(false);
       return;
@@ -196,20 +244,34 @@ export default function Rewards() {
 
     // Apply winnings after the wheels stop
     setTimeout(async () => {
-      const finalPoints = pointsAfterDeduction + totalPointsWon;
-      const { error: awardError } = await supabase
-        .from("user_points")
-        .update({ points: finalPoints, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
+      try {
+        const finalPoints = pointsAfterDeduction + totalPointsWon;
+        const updatePromise = supabase
+          .from("user_points")
+          .update({ points: finalPoints, updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
 
-      if (awardError) {
-        console.error("Error awarding points after spin:", awardError);
-        setResult(`Spin complete! Error awarding points: ${awardError.message}. Current balance shown may be outdated.`);
-      } else {
-        setPoints(finalPoints);
-        setResult(finalResultMessage);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), 5000)
+        );
+
+        const { error: awardError } = await Promise.race([updatePromise, timeoutPromise]);
+
+        if (awardError) {
+          console.error("Error awarding points after spin:", awardError);
+          handleErrorAndRefresh(awardError);
+          setResult(`Spin complete! Error awarding points: ${awardError.message}. Current balance shown may be outdated.`);
+        } else {
+          setPoints(finalPoints);
+          setResult(finalResultMessage);
+        }
+      } catch (error) {
+        console.error("Award points error:", error);
+        handleErrorAndRefresh(error);
+        setResult(`Spin complete! Error awarding points: ${error.message || "Network error"}. Current balance shown may be outdated.`);
+      } finally {
+        setIsSpinning(false);
       }
-      setIsSpinning(false);
     }, animationDurationMs);
   };
 
@@ -234,36 +296,58 @@ export default function Rewards() {
     setClaimingStatus(prev => ({ ...prev, [reward.id]: "claiming" }));
     const pointsAfterClaim = points - reward.cost;
 
-    const { error: pointsError } = await supabase
-      .from("user_points")
-      .update({ points: pointsAfterClaim, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+    try {
+      const updatePromise = supabase
+        .from("user_points")
+        .update({ points: pointsAfterClaim, updated_at: new Date().toISOString() })
+        .eq("user_id", user.id);
 
-    if (pointsError) {
-      console.error("Error updating points in claimShopReward:", pointsError);
-      setShopMessage("Error claiming reward: " + pointsError.message);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 5000)
+      );
+
+      const { error: pointsError } = await Promise.race([updatePromise, timeoutPromise]);
+
+      if (pointsError) {
+        console.error("Error updating points in claimShopReward:", pointsError);
+        handleErrorAndRefresh(pointsError);
+        setShopMessage("Error claiming reward: " + pointsError.message);
+        setTimeout(() => setShopMessage(null), 3000);
+        setClaimingStatus(prev => ({ ...prev, [reward.id]: null }));
+        return;
+      }
+
+      const insertPromise = supabase
+        .from("user_rewards")
+        .insert({ user_id: user.id, reward_name: reward.name, cost: reward.cost, claimed_at: new Date().toISOString() });
+
+      const insertTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 5000)
+      );
+
+      const { error: rewardError } = await Promise.race([insertPromise, insertTimeoutPromise]);
+
+      if (rewardError) {
+        console.error("Error inserting claimed reward record:", rewardError);
+        handleErrorAndRefresh(rewardError);
+        setShopMessage("Points deducted, but failed to record reward: " + rewardError.message);
+        setPoints(pointsAfterClaim);
+      } else {
+        setPoints(pointsAfterClaim);
+        setShopMessage(`Successfully claimed: ${reward.name}!`);
+      }
+      setClaimingStatus(prev => ({ ...prev, [reward.id]: "claimed" }));
+      setTimeout(() => {
+        setClaimingStatus(prev => ({ ...prev, [reward.id]: null }));
+        setShopMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error("Claim reward error:", error);
+      handleErrorAndRefresh(error);
+      setShopMessage("Error claiming reward: " + (error.message || "Network error. Please try again."));
       setTimeout(() => setShopMessage(null), 3000);
       setClaimingStatus(prev => ({ ...prev, [reward.id]: null }));
-      return;
     }
-
-    const { error: rewardError } = await supabase
-      .from("user_rewards")
-      .insert({ user_id: user.id, reward_name: reward.name, cost: reward.cost, claimed_at: new Date().toISOString() });
-
-    if (rewardError) {
-      console.error("Error inserting claimed reward record:", rewardError);
-      setShopMessage("Points deducted, but failed to record reward: " + rewardError.message);
-      setPoints(pointsAfterClaim);
-    } else {
-      setPoints(pointsAfterClaim);
-      setShopMessage(`Successfully claimed: ${reward.name}!`);
-    }
-    setClaimingStatus(prev => ({ ...prev, [reward.id]: "claimed" }));
-    setTimeout(() => {
-      setClaimingStatus(prev => ({ ...prev, [reward.id]: null }));
-      setShopMessage(null);
-    }, 3000);
   };
 
   // Wheel label positions (kept from your original with precise math)
@@ -286,13 +370,18 @@ export default function Rewards() {
     };
   };
 
-  if (loading && !user) {
+  if (authLoading || loadingPoints) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-xl">Loading Rewards...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-xl text-gray-700">Loading Rewards...</p>
+        </div>
       </div>
     );
   }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-4 flex flex-col items-center">
@@ -310,7 +399,7 @@ export default function Rewards() {
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "left 8px center",
-            paddingLeft: "50px",
+            paddingLeft: "80px",
             minWidth: "180px",
             minHeight: "50px",
             display: "flex",
@@ -334,14 +423,92 @@ export default function Rewards() {
         )}
       </div>
 
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 sm:mb-6 md:mb-8 mt-2 sm:mt-4 text-center px-2">
-        Spin the Slot Reels 🎰
-      </h1>
+      <div className="mb-3 sm:mb-6 md:mb-8 mt-2 sm:mt-4 text-center px-2">
+        <SplitTextAnimated
+          text="Rewards Shop"
+          tag="h2"
+          className="text-xl sm:text-2xl md:text-4xl font-extrabold text-gray-900 border-b-2 border-purple-500 pb-2"
+          splitType="chars"
+          delay={30}
+          duration={0.4}
+          from={{ opacity: 0, y: 20 }}
+          to={{ opacity: 1, y: 0 }}
+        />
+      </div>
+      <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg text-center px-2">
+        Use your gold to claim awards here! (Claimable multiple times)
+      </p>
+
+      {shopMessage && (
+        <div
+          className={`mb-4 sm:mb-6 p-2 sm:p-3 rounded-md text-center font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 mx-2 ${
+            shopMessage.includes("Successfully")
+              ? "bg-green-200 text-green-800"
+              : shopMessage.includes("enough")
+              ? "bg-red-200 text-red-800"
+              : "bg-blue-100 text-blue-800"
+          }`}
+        >
+          {shopMessage}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 w-full max-w-5xl px-2 mb-8 sm:mb-12 md:mb-16">
+        {shopRewards.map((reward) => (
+          <div
+            key={reward.id}
+            className="border border-gray-200 rounded-xl p-4 sm:p-5 md:p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
+          >
+            <div>
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">{reward.name}</h3>
+              <p className="text-purple-700 mb-3 sm:mb-4 text-sm sm:text-base md:text-xl font-bold">Cost: {reward.cost} gold</p>
+            </div>
+            <button
+              onClick={() => claimShopReward(reward)}
+              disabled={
+                loadingPoints ||
+                points < reward.cost ||
+                claimingStatus[reward.id] === "claiming" ||
+                claimingStatus[reward.id] === "claimed"
+              }
+              className={`py-2 sm:py-3 px-3 sm:px-4 md:px-6 rounded-full font-semibold transition-all duration-200 transform hover:scale-105 shadow-md text-xs sm:text-sm md:text-base
+                ${
+                  claimingStatus[reward.id] === "claimed"
+                    ? "bg-green-500 text-white cursor-not-allowed"
+                    : claimingStatus[reward.id] === "claiming"
+                    ? "bg-yellow-500 text-white cursor-wait"
+                    : points < reward.cost
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-purple-600 text-white hover:bg-purple-700"
+                }`}
+            >
+              {claimingStatus[reward.id] === "claiming"
+                ? "Claiming..."
+                : claimingStatus[reward.id] === "claimed"
+                ? "Claimed!"
+                : "Claim"}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-3 sm:mb-6 md:mb-8 mt-2 sm:mt-60 text-center px-2">
+        <SplitTextAnimated
+          text="Spin the Slot Reels"
+          tag="h1"
+          className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900"
+          splitType="chars"
+          delay={30}
+          duration={0.4}
+          from={{ opacity: 0, y: 20 }}
+          to={{ opacity: 1, y: 0 }}
+        />
+      </div>
       <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg">Cost per spin: {spinCost} gold</p>
 
       {/* Wheels container - horizontal scroll on mobile, flex on larger screens */}
       <div className="w-full max-w-full overflow-x-auto pb-4 lg:overflow-x-visible scrollbar-hide">
-        <div className="flex flex-row justify-start lg:justify-center items-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-8 p-3 sm:p-4 bg-gray-900 rounded-lg shadow-inner min-w-max lg:min-w-0 mx-auto">
+        <div className="flex flex-row justify-start lg:justify-center items-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-8 p-3 sm:p-4 bg-gray-900/0 rounded-lg shadow-inner min-w-max lg:min-w-0 mx-auto">
           {/* Wheel 1 */}
           <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 border-4 border-dashed border-gray-500 rounded-full flex items-center justify-center bg-blue-100 shadow-inner text-center font-bold text-sm sm:text-lg md:text-xl overflow-hidden relative flex-shrink-0">
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-600 text-2xl sm:text-3xl md:text-4xl leading-none z-30 pointer-events-none">▼</div>
@@ -550,9 +717,9 @@ export default function Rewards() {
 
       <button
         onClick={spinWheel}
-        disabled={isSpinning || loading || points < spinCost}
+        disabled={isSpinning || loadingPoints || points < spinCost}
         className={`py-2 sm:py-3 px-4 sm:px-6 rounded-full font-semibold transition transform hover:scale-105 shadow-md text-sm sm:text-base md:text-lg
-          ${isSpinning || loading || points < spinCost
+          ${isSpinning || loadingPoints || points < spinCost
             ? "bg-gray-400 text-gray-700 cursor-not-allowed opacity-50"
             : "bg-blue-600 text-white hover:bg-blue-700"
           }`}
@@ -574,65 +741,6 @@ export default function Rewards() {
         </div>
       )}
 
-      <h2 className="mt-8 sm:mt-12 md:mt-16 mb-4 sm:mb-6 text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 text-center border-b-2 border-purple-500 pb-2 px-2">
-        Rewards Shop 🛍️
-      </h2>
-      <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg text-center px-2">
-        Use your gold to claim awards here! (Claimable multiple times)
-      </p>
-
-      {shopMessage && (
-        <div
-          className={`mb-4 sm:mb-6 p-2 sm:p-3 rounded-md text-center font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 mx-2 ${
-            shopMessage.includes("Successfully")
-              ? "bg-green-200 text-green-800"
-              : shopMessage.includes("enough")
-              ? "bg-red-200 text-red-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
-        >
-          {shopMessage}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 w-full max-w-5xl px-2">
-        {shopRewards.map((reward) => (
-          <div
-            key={reward.id}
-            className="border border-gray-200 rounded-xl p-4 sm:p-5 md:p-6 bg-white shadow-md hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
-          >
-            <div>
-              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">{reward.name}</h3>
-              <p className="text-purple-700 mb-3 sm:mb-4 text-sm sm:text-base md:text-xl font-bold">Cost: {reward.cost} gold</p>
-            </div>
-            <button
-              onClick={() => claimShopReward(reward)}
-              disabled={
-                loading ||
-                points < reward.cost ||
-                claimingStatus[reward.id] === "claiming" ||
-                claimingStatus[reward.id] === "claimed"
-              }
-              className={`py-2 sm:py-3 px-3 sm:px-4 md:px-6 rounded-full font-semibold transition-all duration-200 transform hover:scale-105 shadow-md text-xs sm:text-sm md:text-base
-                ${
-                  claimingStatus[reward.id] === "claimed"
-                    ? "bg-green-500 text-white cursor-not-allowed"
-                    : claimingStatus[reward.id] === "claiming"
-                    ? "bg-yellow-500 text-white cursor-wait"
-                    : points < reward.cost
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-purple-600 text-white hover:bg-purple-700"
-                }`}
-            >
-              {claimingStatus[reward.id] === "claiming"
-                ? "Claiming..."
-                : claimingStatus[reward.id] === "claimed"
-                ? "Claimed!"
-                : "Claim"}
-            </button>
-          </div>
-        ))}
-      </div>
 
       <div className="mt-8 sm:mt-12 text-gray-600 text-xs sm:text-sm text-center pb-4">
         {user ? `User ID: ${user.id}` : "Not logged in"}
