@@ -83,16 +83,6 @@ Ensure you have the following installed:
    ```
    - Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-
-## Authors
-
-- **Vincent Pierlot** - [NobleB312](https://github.com/NobleB312)
-- **Ronald Nguyen** - [RonaldTri](https://github.com/RonaldTri)
-- **Cristian Almazan** - [Cristron123](https://github.com/Cristron123)
-- **Sroth Sinha** - [SrothCS](https://github.com/SrothCS)
-- **Phuc Phan** - [gphucc.phan](https://github.com/gphucc.phan)
-- **Daniel Magdaleno Gonzalez** - [dtnny](https://github.com/dtnny)
-
 ## Acknowledgments
 
 - **Supabase Documentation**: For guiding authentication and database setup.

@@ -14,12 +14,11 @@ export default function AboutUs() {
   const { user } = useAuth();
 
   const team = [
-    { name: "Daniel", role: "Developer" },
-    { name: "Cristian", role: "Developer" },
-    { name: "Ronald", role: "Developer" },
-    { name: "Vincent", role: "Developer" },
-    { name: "Sroth", role: "Developer" },
-    { name: "Phuc", role: "Developer" },
+    { name: "----", role: "Developer" },
+    { name: "----", role: "Developer" },
+    { name: "----", role: "Developer" },
+    { name: "----", role: "Developer" },
+    { name: "----", role: "Developer" },
   ];
 
   return (
